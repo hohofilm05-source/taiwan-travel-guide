@@ -301,8 +301,9 @@
     gap: 6px;
   }
   .day-btn:first-child { border-radius: 10px 0 0 10px; }
-  .day-btn:nth-child(2) { border-left: none; border-right: none; }
+  .day-btn + .day-btn { border-left: none; }
   .day-btn:last-child { border-radius: 0 10px 10px 0; }
+  .day-btn { font-size: 13px; padding: 10px 6px; min-width: 0; }
   .day-btn.active-day1 {
     background: var(--accent-blue);
     border-color: var(--accent-blue);
