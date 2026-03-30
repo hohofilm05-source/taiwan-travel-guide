@@ -151,6 +151,16 @@
     color: var(--primary);
     border-color: white;
   }
+  .poi-loading {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .poi-chip:disabled { opacity: 0.6; cursor: wait; }
   .poi-chip.poi-clear {
     background: rgba(239,71,111,0.8);
     border-color: transparent;
@@ -1234,38 +1244,27 @@ function flyTo(lat, lng, id) {
 // ─── POI (Points of Interest) ───
 const poiLayers = {};
 const poiActive = new Set();
+const poiCache = {};
 
 const poiConfig = {
-  restaurant: {
-    query: 'node["amenity"~"restaurant|fast_food"]',
-    icon: '&#127860;', color: '#e74c3c', label: '식당'
-  },
-  cafe: {
-    query: 'node["amenity"="cafe"]',
-    icon: '&#9749;', color: '#8e6e53', label: '카페'
-  },
-  tourism: {
-    query: 'node["tourism"~"attraction|museum|viewpoint|artwork"];node["historic"];node["amenity"="place_of_worship"]',
-    icon: '&#127963;', color: '#2ecc71', label: '관광지'
-  },
-  convenience: {
-    query: 'node["shop"="convenience"]',
-    icon: '&#127978;', color: '#3498db', label: '편의점'
-  },
-  station: {
-    query: 'node["station"="subway"];node["railway"="station"]',
-    icon: '&#128643;', color: '#9b59b6', label: '지하철'
-  }
+  restaurant: { icon: '&#127860;', color: '#e74c3c', label: '식당',
+    nominatim: ['restaurant','fast_food'], amenity: true },
+  cafe: { icon: '&#9749;', color: '#8e6e53', label: '카페',
+    nominatim: ['cafe'], amenity: true },
+  tourism: { icon: '&#127963;', color: '#2ecc71', label: '관광지',
+    nominatim: ['museum','temple','monument','attraction'], amenity: false },
+  convenience: { icon: '&#127978;', color: '#3498db', label: '편의점',
+    nominatim: ['convenience','supermarket'], amenity: true },
+  station: { icon: '&#128643;', color: '#9b59b6', label: '지하철',
+    nominatim: ['station','subway'], amenity: false }
 };
 
 function togglePOI(btn, cat) {
   if (poiActive.has(cat)) {
-    // Remove
     poiActive.delete(cat);
     btn.classList.remove('active');
     if (poiLayers[cat]) { map.removeLayer(poiLayers[cat]); delete poiLayers[cat]; }
   } else {
-    // Load & show
     poiActive.add(cat);
     btn.classList.add('active');
     loadPOI(cat);
@@ -1273,43 +1272,85 @@ function togglePOI(btn, cat) {
   document.getElementById('poiClearBtn').style.display = poiActive.size > 0 ? 'inline-flex' : 'none';
 }
 
-function loadPOI(cat) {
-  const bounds = map.getBounds();
-  const bbox = `${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()}`;
-  const cfg = poiConfig[cat];
-  const queries = cfg.query.split(';').map(q => `${q}(${bbox});`).join('');
-  const overpassQuery = `[out:json][timeout:10];(${queries});out body 200;`;
-  const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
+function poiCacheKey(cat) {
+  const c = map.getCenter();
+  const z = map.getZoom();
+  return `${cat}_${c.lat.toFixed(2)}_${c.lng.toFixed(2)}_${z}`;
+}
 
-  // Show loading state
+function createPoiMarker(el, cfg) {
+  const name = el.name || el.display_name?.split(',')[0] || cfg.label;
+  const addr = el.display_name ? el.display_name.split(',').slice(1,3).join(',') : '';
+  const lat = parseFloat(el.lat);
+  const lon = parseFloat(el.lon);
+  const icon = L.divIcon({
+    className: '',
+    html: `<div style="width:22px;height:22px;border-radius:50%;background:${cfg.color};color:white;display:flex;align-items:center;justify-content:center;font-size:12px;box-shadow:0 1px 4px rgba(0,0,0,0.3);border:1.5px solid white;">${cfg.icon}</div>`,
+    iconSize: [22, 22], iconAnchor: [11, 11], popupAnchor: [0, -14]
+  });
+  return L.marker([lat, lon], { icon })
+    .bindPopup(`<div class="poi-popup"><strong>${name}</strong><br><span class="poi-cat">${cfg.label}</span><div class="poi-addr">${addr}</div><div style="margin-top:5px;display:flex;gap:4px;flex-wrap:wrap;"><a href="https://www.google.com/maps/search/?api=1&query=${lat},${lon}" target="_blank" style="padding:3px 8px;border-radius:6px;background:#4285f4;color:white;font-size:10px;text-decoration:none;font-weight:700;">Maps &#8599;</a><a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}&travelmode=transit" target="_blank" style="padding:3px 8px;border-radius:6px;background:#34a853;color:white;font-size:10px;text-decoration:none;font-weight:700;">길찾기 &#8599;</a><button onclick="selectSearchResult(${lat},${lon},'${name.replace(/'/g,"\\'")}')" style="padding:3px 8px;border:none;border-radius:6px;background:#9b59b6;color:white;font-size:10px;cursor:pointer;font-weight:700;">&#128205; 선택</button></div></div>`);
+}
+
+async function loadPOI(cat) {
+  const cfg = poiConfig[cat];
   const btn = document.querySelector(`.poi-chip[data-cat="${cat}"]`);
   const origText = btn.innerHTML;
-  btn.innerHTML = '...';
+  const cacheKey = poiCacheKey(cat);
 
-  fetch(url)
-    .then(r => r.json())
-    .then(data => {
-      btn.innerHTML = origText;
-      if (poiLayers[cat]) map.removeLayer(poiLayers[cat]);
-      const layer = L.layerGroup();
-      data.elements.forEach(el => {
-        if (!el.lat || !el.lon) return;
-        const name = el.tags.name || el.tags['name:en'] || el.tags['name:zh'] || cfg.label;
-        const addr = el.tags['addr:full'] || el.tags['addr:street'] || '';
-        const cuisine = el.tags.cuisine ? `<br><span style="font-size:10px;color:#888;">${el.tags.cuisine}</span>` : '';
-        const icon = L.divIcon({
-          className: '',
-          html: `<div style="width:22px;height:22px;border-radius:50%;background:${cfg.color};color:white;display:flex;align-items:center;justify-content:center;font-size:12px;box-shadow:0 1px 4px rgba(0,0,0,0.3);border:1.5px solid white;">${cfg.icon}</div>`,
-          iconSize: [22, 22], iconAnchor: [11, 11], popupAnchor: [0, -14]
-        });
-        const marker = L.marker([el.lat, el.lon], { icon })
-          .bindPopup(`<div class="poi-popup"><strong>${name}</strong>${cuisine}<br><span class="poi-cat">${cfg.label}</span>${addr ? '<div class="poi-addr">' + addr + '</div>' : ''}<div style="margin-top:5px;display:flex;gap:4px;flex-wrap:wrap;"><a href="https://www.google.com/maps/search/?api=1&query=${el.lat},${el.lon}" target="_blank" style="padding:3px 8px;border-radius:6px;background:#4285f4;color:white;font-size:10px;text-decoration:none;font-weight:700;">Maps &#8599;</a><a href="https://www.google.com/maps/dir/?api=1&destination=${el.lat},${el.lon}&travelmode=transit" target="_blank" style="padding:3px 8px;border-radius:6px;background:#34a853;color:white;font-size:10px;text-decoration:none;font-weight:700;">길찾기 &#8599;</a><button onclick="selectSearchResult(${el.lat},${el.lon},'${name.replace(/'/g,"\\'")}')" style="padding:3px 8px;border:none;border-radius:6px;background:#9b59b6;color:white;font-size:10px;cursor:pointer;font-weight:700;">&#128205; 선택</button></div></div>`);
-        layer.addLayer(marker);
-      });
-      layer.addTo(map);
-      poiLayers[cat] = layer;
-    })
-    .catch(() => { btn.innerHTML = origText; });
+  // Use cache if available
+  if (poiCache[cacheKey]) {
+    renderPOILayer(cat, poiCache[cacheKey], cfg);
+    return;
+  }
+
+  btn.innerHTML = `<span class="poi-loading"></span>`;
+  btn.disabled = true;
+
+  const bounds = map.getBounds();
+  const center = map.getCenter();
+  const queries = cfg.nominatim.map(q =>
+    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=tw&limit=15&viewbox=${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()},${bounds.getSouth()}&bounded=1&accept-language=ko,zh,en`
+  );
+
+  try {
+    const results = [];
+    // Sequential requests with small delay to avoid rate limiting
+    for (const url of queries) {
+      const res = await fetch(url, { headers: { 'User-Agent': 'TaiwanTravelGuide/1.0' } });
+      if (!res.ok) throw new Error('API error');
+      const data = await res.json();
+      results.push(...data);
+      if (queries.length > 1) await new Promise(r => setTimeout(r, 300));
+    }
+    // Deduplicate by coordinates
+    const seen = new Set();
+    const unique = results.filter(d => {
+      const key = `${parseFloat(d.lat).toFixed(4)},${parseFloat(d.lon).toFixed(4)}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    poiCache[cacheKey] = unique;
+    renderPOILayer(cat, unique, cfg);
+  } catch (e) {
+    console.warn('POI load failed:', cat, e);
+  } finally {
+    btn.innerHTML = origText;
+    btn.disabled = false;
+  }
+}
+
+function renderPOILayer(cat, data, cfg) {
+  if (poiLayers[cat]) map.removeLayer(poiLayers[cat]);
+  const layer = L.layerGroup();
+  data.forEach(el => {
+    if (!el.lat || !el.lon) return;
+    layer.addLayer(createPoiMarker(el, cfg));
+  });
+  layer.addTo(map);
+  poiLayers[cat] = layer;
 }
 
 function clearAllPOI() {
@@ -1321,14 +1362,18 @@ function clearAllPOI() {
   document.getElementById('poiClearBtn').style.display = 'none';
 }
 
-// Reload POIs when map moves (debounced)
+// Reload POIs when map moves significantly (debounced, with distance check)
 let poiReloadTimer = null;
+let lastPoiCenter = null;
 map.on('moveend', () => {
   if (poiActive.size === 0) return;
+  const center = map.getCenter();
+  if (lastPoiCenter && center.distanceTo(lastPoiCenter) < 500) return;
   clearTimeout(poiReloadTimer);
   poiReloadTimer = setTimeout(() => {
+    lastPoiCenter = map.getCenter();
     poiActive.forEach(cat => loadPOI(cat));
-  }, 800);
+  }, 1500);
 });
 
 // ─── SEARCH ───
