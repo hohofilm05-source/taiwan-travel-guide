@@ -56,6 +56,52 @@
     gap: 6px;
   }
   .header .subtitle .icon { font-size: 14px; }
+  .header-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .weather-widget {
+    background: rgba(255,255,255,0.15);
+    border-radius: 12px;
+    padding: 6px 12px;
+    cursor: pointer;
+    text-align: center;
+    min-width: 70px;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .weather-widget:active { background: rgba(255,255,255,0.25); }
+  .weather-icon { font-size: 24px; line-height: 1; }
+  .weather-temp { font-size: 18px; font-weight: 800; }
+  .weather-desc { font-size: 10px; opacity: 0.8; }
+  .weather-loading { font-size: 14px; opacity: 0.6; }
+  .weather-detail {
+    display: none;
+    margin-top: 10px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 12px;
+    line-height: 1.8;
+  }
+  .weather-detail.show { display: block; }
+  .weather-forecast {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    margin-top: 8px;
+    padding-bottom: 4px;
+  }
+  .weather-forecast::-webkit-scrollbar { display: none; }
+  .wf-item {
+    flex-shrink: 0;
+    text-align: center;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 6px 10px;
+    min-width: 60px;
+  }
+  .wf-time { font-size: 10px; opacity: 0.7; }
+  .wf-icon { font-size: 18px; }
+  .wf-temp { font-size: 13px; font-weight: 700; }
+  .wf-rain { font-size: 9px; color: #74b9ff; }
 
   /* Search Bar */
   .search-bar {
@@ -627,11 +673,19 @@
 
 <!-- Header -->
 <div class="header">
-  <h1>대만 2일 여행 가이드</h1>
-  <div class="subtitle">
-    <span class="icon">&#127968;</span>
-    시저메트로 타이페이 &middot; MRT 룽산쓰역 2번 출구 도보 3분
+  <div class="header-top">
+    <div>
+      <h1>대만 2일 여행 가이드</h1>
+      <div class="subtitle">
+        <span class="icon">&#127968;</span>
+        시저메트로 타이페이 &middot; MRT 룽산쓰역 2번 출구 도보 3분
+      </div>
+    </div>
+    <div id="weatherWidget" class="weather-widget" onclick="toggleWeatherDetail()">
+      <div class="weather-loading">&#9729; --°</div>
+    </div>
   </div>
+  <div id="weatherDetail" class="weather-detail"></div>
 </div>
 
 <!-- Search Bar -->
@@ -1979,6 +2033,69 @@ document.addEventListener('click', e => {
     document.getElementById('searchResults').classList.remove('show');
   }
 });
+
+// ─── WEATHER (Open-Meteo API, free, no key) ───
+const weatherCodes = {
+  0:'☀️ 맑음',1:'🌤 대체로 맑음',2:'⛅ 구름 조금',3:'☁️ 흐림',
+  45:'🌫 안개',48:'🌫 짙은 안개',
+  51:'🌦 이슬비',53:'🌦 이슬비',55:'🌧 이슬비',
+  61:'🌧 비',63:'🌧 비',65:'🌧️ 폭우',
+  71:'🌨 눈',73:'🌨 눈',75:'❄️ 폭설',
+  80:'🌦 소나기',81:'🌧 소나기',82:'⛈ 폭우',
+  95:'⛈ 뇌우',96:'⛈ 뇌우+우박',99:'⛈ 뇌우+우박'
+};
+function wIcon(code) { return (weatherCodes[code] || '🌤 맑음').split(' ')[0]; }
+function wDesc(code) { return (weatherCodes[code] || '맑음').split(' ').slice(1).join(' '); }
+
+async function loadWeather() {
+  try {
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude=25.033&longitude=121.565&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code,precipitation_probability&timezone=Asia/Taipei&forecast_days=2';
+    const res = await fetch(url);
+    const data = await res.json();
+    const c = data.current;
+    const icon = wIcon(c.weather_code);
+    const desc = wDesc(c.weather_code);
+    const temp = Math.round(c.temperature_2m);
+    const feel = Math.round(c.apparent_temperature);
+
+    document.getElementById('weatherWidget').innerHTML =
+      '<div class="weather-icon">' + icon + '</div>' +
+      '<div class="weather-temp">' + temp + '°</div>' +
+      '<div class="weather-desc">' + desc + '</div>';
+
+    // Build hourly forecast (next 24h)
+    const now = new Date();
+    const hourly = data.hourly;
+    let forecastHtml = '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;">' +
+      '<span>🌡 체감 ' + feel + '° &nbsp; 💧 습도 ' + c.relative_humidity_2m + '% &nbsp; 💨 풍속 ' + c.wind_speed_10m + 'km/h</span>' +
+      '</div><div style="margin-top:6px;font-weight:700;">24시간 예보</div><div class="weather-forecast">';
+
+    let count = 0;
+    for (let i = 0; i < hourly.time.length && count < 12; i++) {
+      const t = new Date(hourly.time[i]);
+      if (t <= now) continue;
+      const h = t.getHours();
+      const label = h + '시';
+      const fi = wIcon(hourly.weather_code[i]);
+      const ft = Math.round(hourly.temperature_2m[i]);
+      const rain = hourly.precipitation_probability[i];
+      forecastHtml += '<div class="wf-item"><div class="wf-time">' + label + '</div><div class="wf-icon">' + fi + '</div><div class="wf-temp">' + ft + '°</div>' + (rain > 0 ? '<div class="wf-rain">💧' + rain + '%</div>' : '') + '</div>';
+      count++;
+    }
+    forecastHtml += '</div>';
+    document.getElementById('weatherDetail').innerHTML = forecastHtml;
+  } catch(e) {
+    document.getElementById('weatherWidget').innerHTML = '<div class="weather-loading">날씨 로딩 실패</div>';
+  }
+}
+
+function toggleWeatherDetail() {
+  document.getElementById('weatherDetail').classList.toggle('show');
+}
+
+loadWeather();
+// Refresh weather every 30 minutes
+setInterval(loadWeather, 30 * 60 * 1000);
 
 // Initial render
 renderDay1();
