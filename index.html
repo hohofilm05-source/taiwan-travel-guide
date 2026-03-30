@@ -211,6 +211,7 @@
     animation: spin 0.6s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
   .poi-chip:disabled { opacity: 0.6; cursor: wait; }
   .poi-chip.poi-clear {
     background: rgba(239,71,111,0.8);
@@ -831,26 +832,38 @@ const DAY1_SPOTS = [
   },
   {
     id: 'R1', nameKo: '호공도금계원', chinese: '好公道金雞園',
-    lat: 25.0328, lng: 121.5298, isMeal: true,
+    lat: 25.0328, lng: 121.5298, isPickedRestaurant: true,
     transport: '🚇 MRT 동먼역 5번 출구→도보 3분 (융캉제 내)',
-    descKo: '융캉제 숨은 노포! 샤오롱바오와 탕위안(탕원)이 유명. 딘타이펑보다 저렴하고 로컬 분위기. 현지인 단골 맛집.',
-    price: 'NT$100~', time: 'evening',
-    restaurants: [
-      { name: '호공도금계원 (好公道金雞園)', desc: '융캉제 숨은 노포. 샤오롱바오+탕위안 조합이 일품. 딘타이펑보다 저렴하고 현지인 분위기!', price: 'NT$100~', tag: '로컬' },
-      { name: '린양강셩멍 해산물 (臨洋港生猛活海鮮)', desc: '장안동로 열초거리 최고 인기! 해산물 볶음, 볶음밥, 맥주. 현지 직장인 회식 성지. 17:00~02:00.', price: 'NT$100~/1dish', tag: '해산물' },
-      { name: '황지아훠궈 (皇家火鍋)', desc: '시먼 마라훠궈 맛집! 10가지 탕 중 2가지 선택. 고기+음료 무한리필 NT$950. 현금만 가능. 늦은 밤까지 영업.', price: 'NT$950', tag: '훠궈' }
-    ]
+    descKo: '융캉제 숨은 노포! 샤오롱바오+탕위안 조합이 일품. 딘타이펑보다 저렴하고 현지인 분위기.',
+    price: 'NT$100~', time: 'evening'
   },
   {
-    id: 'R2', nameKo: '위핀위엔 & 핀도우꼬치', chinese: '御品元冰火湯圓 & 品都串燒攤',
-    lat: 25.0273, lng: 121.5533, isMeal: true,
-    transport: '🚇 MRT 신이안허역 or 국부기념관역→도보 5~10분',
-    descKo: '통화가 야시장 디저트 명가 + 동구 최강 꼬치! 두 곳 모두 줄 서는 인기 맛집.',
-    price: 'NT$60~', time: 'evening',
-    restaurants: [
-      { name: '위핀위엔 (御品元冰火湯圓)', desc: '미슐랭 빕구르망! 빙수 위에 뜨거운 탕위안을 올린 "빙화탕위안". 통화가 야시장 필수 디저트.', price: 'NT$60~', tag: '미슐랭' },
-      { name: '핀도우꼬치 (品都串燒攤)', desc: '동구 최강 숯불 꼬치! 주말 2시간 대기 각오. 배이컨떡, 치즈닭가슴살, 토마토삼겹살 추천. 17:30~24:00.', price: 'NT$30~/꼬치', tag: '줄서기' }
-    ]
+    id: 'R2', nameKo: '린양강셩멍 해산물', chinese: '臨洋港生猛活海鮮',
+    lat: 25.0489, lng: 121.5318, isPickedRestaurant: true,
+    transport: '🚇 MRT 쑹장난징역→도보 10분 (장안동로 열초거리)',
+    descKo: '장안동로 열초거리 최고 인기! 해산물 볶음·볶음밥·맥주. 현지 직장인 회식 성지. 17:00~02:00.',
+    price: 'NT$100~/1dish', time: 'evening'
+  },
+  {
+    id: 'R3', nameKo: '황지아훠궈', chinese: '皇家火鍋',
+    lat: 25.0393, lng: 121.5058, isPickedRestaurant: true,
+    transport: '🚇 MRT 시먼역 2번 출구→도보 5분 (중화로)',
+    descKo: '시먼 마라훠궈 맛집! 10가지 탕 중 2가지 선택. 고기+음료 무한리필 NT$950. 현금만 가능.',
+    price: 'NT$950', time: 'evening'
+  },
+  {
+    id: 'R4', nameKo: '위핀위엔 빙화탕위안', chinese: '御品元冰火湯圓',
+    lat: 25.0273, lng: 121.5533, isPickedRestaurant: true,
+    transport: '🚇 MRT 신이안허역→도보 5분 (통화가 야시장 내)',
+    descKo: '미슐랭 빕구르망! 빙수 위에 뜨거운 탕위안을 올린 "빙화탕위안". 통화가 야시장 필수 디저트.',
+    price: 'NT$60~', time: 'evening'
+  },
+  {
+    id: 'R5', nameKo: '핀도우꼬치', chinese: '品都串燒攤',
+    lat: 25.0417, lng: 121.5530, isPickedRestaurant: true,
+    transport: '🚇 MRT 국부기념관역→도보 5분 (충효동로4단 299호)',
+    descKo: '동구 최강 숯불 꼬치! 주말 2시간 대기 각오. 배이컨떡·치즈닭가슴살·토마토삼겹살 추천. 17:30~24:00.',
+    price: 'NT$30~/꼬치', time: 'evening'
   }
 ];
 
@@ -1056,6 +1069,24 @@ function createHotelIcon() {
   });
 }
 
+function createPickedRestaurantIcon(label) {
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      width:36px;height:36px;border-radius:8px;
+      background:linear-gradient(135deg,#ff6b6b,#ee5a24);color:white;
+      display:flex;align-items:center;justify-content:center;
+      font-size:18px;
+      box-shadow:0 3px 12px rgba(238,90,36,0.5);
+      border:2.5px solid white;
+      animation:bounce 2s infinite;
+    ">&#11088;</div>`,
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
+    popupAnchor: [0, -22]
+  });
+}
+
 // Hotel marker (always visible)
 const hotelMarker = L.marker([HOTEL.lat, HOTEL.lng], { icon: createHotelIcon() })
   .addTo(map)
@@ -1081,8 +1112,10 @@ function gmapBtns(lat, lng, name) {
 }
 
 DAY1_SPOTS.filter(s => !s.isMeal).forEach(s => {
-  const m = L.marker([s.lat, s.lng], { icon: createIcon(s.id, '#4361ee') })
-    .bindPopup(`<strong>${s.id}. ${s.nameKo}</strong><br>${s.chinese}<br><span class="popup-transport">${s.transport}</span>${gmapBtns(s.lat,s.lng,s.chinese)}`);
+  const icon = s.isPickedRestaurant ? createPickedRestaurantIcon() : createIcon(s.id, '#4361ee');
+  const label = s.isPickedRestaurant ? '&#11088; ' + s.nameKo : s.id + '. ' + s.nameKo;
+  const m = L.marker([s.lat, s.lng], { icon, zIndexOffset: s.isPickedRestaurant ? 500 : 0 })
+    .bindPopup(`<strong>${label}</strong><br>${s.chinese}<br><span class="popup-transport">${s.transport}</span>${gmapBtns(s.lat,s.lng,s.chinese)}`);
   day1Layer.addLayer(m);
   day1Markers.push({ marker: m, spot: s });
 });
@@ -1196,11 +1229,13 @@ function spotCard(s, dayClass) {
       <span class="price-tag">${r.price}</span>
     </div>
   `).join('')}</div>` : '';
-  const numHtml = s.isMeal ? `<div class="spot-num" style="background:var(--accent-red);font-size:16px">&#127860;</div>` : `<div class="spot-num">${s.id}</div>`;
+  const isRest = s.isPickedRestaurant;
+  const numHtml = s.isMeal ? `<div class="spot-num" style="background:var(--accent-red);font-size:16px">&#127860;</div>` : isRest ? `<div class="spot-num" style="background:linear-gradient(135deg,#ff6b6b,#ee5a24);font-size:16px;border-radius:8px">&#11088;</div>` : `<div class="spot-num">${s.id}</div>`;
   const mealClass = s.isMeal ? ' food' : '';
-  const clickAttr = s.isMeal ? '' : `onclick="flyTo(${s.lat}, ${s.lng}, ${s.id})"`;
+  const clickAttr = s.isMeal ? '' : `onclick="flyTo(${s.lat}, ${s.lng}, '${s.id}')"`;
+  const restStyle = isRest ? 'border-left:4px solid #ee5a24;background:linear-gradient(135deg,#fff9f5,#ffffff)' : '';
   return `
-    <div class="spot-card ${dayClass}${mealClass}" ${clickAttr}>
+    <div class="spot-card ${dayClass}${mealClass}" ${clickAttr} ${restStyle ? 'style="'+restStyle+'"' : ''}>
       ${numHtml}
       <h3>${s.nameKo} ${hotHtml}</h3>
       <div class="chinese">${s.chinese}</div>
