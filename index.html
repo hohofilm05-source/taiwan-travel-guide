@@ -318,6 +318,11 @@
     border-color: var(--accent-green);
     color: white;
   }
+  .day-btn.active-nearby {
+    background: #8b5cf6;
+    border-color: #8b5cf6;
+    color: white;
+  }
 
   /* Content Area */
   .content {
@@ -664,9 +669,10 @@
 
 <!-- Day Toggle -->
 <div class="day-toggle">
-  <button class="day-btn active-day1" onclick="showDay(1)" id="btn-day1">DAY 1 시내</button>
-  <button class="day-btn" onclick="showDay(2)" id="btn-day2">DAY 2 근교</button>
-  <button class="day-btn" onclick="showDay(0)" id="btn-info">여행정보</button>
+  <button class="day-btn active-day1" onclick="showDay(1)" id="btn-day1">DAY 1</button>
+  <button class="day-btn" onclick="showDay(2)" id="btn-day2">DAY 2</button>
+  <button class="day-btn" onclick="showDay(3)" id="btn-nearby">근교명소</button>
+  <button class="day-btn" onclick="showDay(0)" id="btn-info">정보</button>
 </div>
 
 <!-- Content -->
@@ -841,6 +847,86 @@ const DAY2_SPOTS = [
   }
 ];
 
+const NEARBY_SPOTS = [
+  {
+    id: 'N1', nameKo: '양명산', chinese: '陽明山',
+    lat: 25.1685, lng: 121.5601, category: 'nature',
+    transport: '🏠 호텔→룽산쓰역→반난선(藍)→타이페이역 환승→단수이신이선(紅)→스린역→260/紅5버스 종점 (NT$35, 약 50분)',
+    descKo: '화산 온천, 소인탄 폭포(티파니블루!), 꽃축제(2~3월), 칭티엔강 초원 하이킹. 도심에서 가장 가까운 국립공원.',
+    price: '무료 (온천별도)', time: 'nature'
+  },
+  {
+    id: 'N2', nameKo: '우라이 온천마을', chinese: '烏來溫泉',
+    lat: 24.8654, lng: 121.5508, category: 'nature',
+    transport: '🏠 호텔→룽산쓰역→쑹산신뎬선(綠)→신뎬역→849버스 종점 (NT$35, 약 90분)',
+    descKo: '타이야족 원주민 마을+노천온천+폭포+트로코 열차. 베이터우와 다른 산속 비경. 원주민 요리 체험 가능.',
+    price: '온천 NT$200~500', time: 'nature'
+  },
+  {
+    id: 'N3', nameKo: '핑시선 기차여행', chinese: '平溪線',
+    lat: 25.0425, lng: 121.7773, category: 'nature',
+    transport: '🏠 호텔→룽산쓰역→반난선(藍)→타이페이역→TRA기차→루이팡역 환승→핑시선 (NT$49+1일패스 NT$80, 약 90분)',
+    descKo: '허우통(고양이마을)→스펀(천등)→핑시→징통. 1일 패스로 자유 승하차! 스펀폭포(대만판 나이아가라)도 도보 20분.',
+    price: '1일패스 NT$80', time: 'nature'
+  },
+  {
+    id: 'N4', nameKo: '허우통 고양이마을', chinese: '猴硐貓村',
+    lat: 25.0868, lng: 121.8277, category: 'culture',
+    transport: '🏠 호텔→타이페이역→TRA기차→루이팡역→핑시선 1정거장→허우통역 (NT$56, 약 60분)',
+    descKo: 'CNN 선정 세계 6대 고양이마을! 폐광촌에 100마리 이상 고양이 서식. 탄광 역사관, 고양이 테마 카페/기념품샵.',
+    price: '무료', time: 'culture'
+  },
+  {
+    id: 'N5', nameKo: '진과스 황금박물관', chinese: '金瓜石黃金博物館',
+    lat: 25.1088, lng: 121.8573, category: 'culture',
+    transport: '🏠 호텔→타이페이역→TRA기차→루이팡역→788버스 (NT$64, 약 90분) / 지우펀에서 버스 10분',
+    descKo: '일제시대 최대 금광 유적지. 220kg 순금 금괴를 직접 만져볼 수 있는 체험! 일본식 광산 사택 거리 산책.',
+    price: 'NT$80', time: 'culture'
+  },
+  {
+    id: 'N6', nameKo: '국립철도박물관', chinese: '國立鐵道博物館',
+    lat: 25.0465, lng: 121.5178, category: 'culture',
+    transport: '🏠 호텔→룽산쓰역→반난선(藍) 2정거장→타이페이역→도보 10분 (NT$20, 약 20분)',
+    descKo: '2025년 개관 신규 명소! 옛 타이페이 기관차 공장을 복원한 "살아있는 철도 박물관". 주말 블루트레인 탑승 체험.',
+    price: 'NT$100', time: 'culture', hot: true
+  },
+  {
+    id: 'N7', nameKo: '예류 지질공원', chinese: '野柳地質公園',
+    lat: 25.2049, lng: 121.6908, category: 'scenic',
+    transport: '🏠 호텔→타이페이역→궈광버스1815번 (NT$96, 약 90분) / KKday 투어버스 추천',
+    descKo: '"여왕 머리" 바위가 세계적으로 유명! 아이스크림 암석, 벌집 암석 등 해식 지형의 신비. 바다 전망도 일품.',
+    price: 'NT$120', time: 'scenic'
+  },
+  {
+    id: 'N8', nameKo: '지룽 정빈어항', chinese: '正濱漁港',
+    lat: 25.1291, lng: 121.7657, category: 'scenic',
+    transport: '🏠 호텔→타이페이역→TRA기차→지룽역→101/103버스 (NT$49+15, 약 60분)',
+    descKo: '대만판 "베네치아"! 알록달록 컬러풀 어촌마을 인생샷 포토존. 근처 해산물 시장에서 회/해산물 추천.',
+    price: '무료', time: 'scenic'
+  },
+  {
+    id: 'N9', nameKo: '관두부두 컨테이너마켓', chinese: '關渡碼頭貨櫃市集',
+    lat: 25.1170, lng: 121.4642, category: 'hot',
+    transport: '🏠 호텔→룽산쓰역→반난선(藍)→타이페이역 환승→단수이신이선(紅)→관두역 1번 출구→도보 8분 (NT$35, 약 40분)',
+    descKo: 'MZ세대 핫플 급부상! 강변 컨테이너 카페+마켓. 석양 명소, 주말 라이브 공연. U-Bike로 단수이까지 자전거 코스도 가능.',
+    price: '무료', time: 'hot', hot: true
+  },
+  {
+    id: 'N10', nameKo: '양명산 소인탄 폭포', chinese: '小隱潭瀑布',
+    lat: 25.1726, lng: 121.5598, category: 'hot',
+    transport: '🏠 호텔→스린역→260버스→양명산 버스터미널→도보 5분 (NT$35, 약 50분)',
+    descKo: 'SNS 바이럴 인생샷 성지! 유황 성분으로 티파니블루빛 폭포. 양명산 가면 무조건 들러야 할 무료 명소.',
+    price: '무료', time: 'hot', hot: true
+  },
+  {
+    id: 'N11', nameKo: 'NOKE 충칭원구', chinese: 'NOKE 忠泰園區',
+    lat: 25.0410, lng: 121.5490, category: 'hot',
+    transport: '🏠 호텔→룽산쓰역→반난선(藍) 4정거장→중샤오푸싱역→도보 5분 (NT$25, 약 25분)',
+    descKo: '2024 오픈 신규 복합문화공간! 미술관+디자인 마켓+루프탑 바+에슬라이트 입점. 세련된 건축미로 포토존 가득.',
+    price: '무료 (전시별도)', time: 'hot', hot: true
+  }
+];
+
 // ─── MAP SETUP ───
 const map = L.map('map', { zoomControl: false, tap: true, tapTolerance: 15 }).setView([25.045, 121.53], 13);
 L.control.zoom({ position: 'topright' }).addTo(map);
@@ -952,6 +1038,18 @@ const day2Route = L.polyline(day2Coords, {
 day1Layer.addLayer(day1Route);
 day2Layer.addLayer(day2Route);
 
+// Nearby layer
+const nearbyLayer = L.layerGroup();
+const nearbyMarkers = [];
+const nearbyCatColors = { nature: '#06d6a0', culture: '#f4a261', scenic: '#118ab2', hot: '#ef476f' };
+NEARBY_SPOTS.forEach(s => {
+  const color = nearbyCatColors[s.category] || '#8b5cf6';
+  const m = L.marker([s.lat, s.lng], { icon: createIcon(s.id.replace('N',''), color) })
+    .bindPopup(`<strong>${s.nameKo}</strong><br>${s.chinese}<br><span class="popup-transport">${s.transport.substring(0, 60)}...</span>${gmapBtns(s.lat, s.lng, s.chinese)}`);
+  nearbyLayer.addLayer(m);
+  nearbyMarkers.push({ marker: m, spot: s });
+});
+
 // Legend
 const legend = L.control({ position: 'bottomleft' });
 legend.onAdd = function() {
@@ -976,13 +1074,16 @@ function showDay(day) {
   currentDay = day;
   const b1 = document.getElementById('btn-day1');
   const b2 = document.getElementById('btn-day2');
+  const bN = document.getElementById('btn-nearby');
   const bI = document.getElementById('btn-info');
   b1.className = 'day-btn' + (day === 1 ? ' active-day1' : '');
   b2.className = 'day-btn' + (day === 2 ? ' active-day2' : '');
+  bN.className = 'day-btn' + (day === 3 ? ' active-nearby' : '');
   bI.className = 'day-btn' + (day === 0 ? ' active-info' : '');
 
   map.removeLayer(day1Layer);
   map.removeLayer(day2Layer);
+  map.removeLayer(nearbyLayer);
 
   if (day === 1) {
     day1Layer.addTo(map);
@@ -992,6 +1093,11 @@ function showDay(day) {
     day2Layer.addTo(map);
     map.fitBounds(day2Route.getBounds(), { padding: [30, 30] });
     renderDay2();
+  } else if (day === 3) {
+    nearbyLayer.addTo(map);
+    const nearbyBounds = L.latLngBounds(NEARBY_SPOTS.map(s => [s.lat, s.lng]));
+    map.fitBounds(nearbyBounds, { padding: [30, 30] });
+    renderNearby();
   } else {
     day1Layer.addTo(map);
     day2Layer.addTo(map);
@@ -1093,6 +1199,65 @@ function renderDay2() {
       ${evening.map(s => spotCard(s, 'day2')).join('')}
     </div>
   `;
+}
+
+function nearbyCard(s) {
+  const catLabels = { nature: '자연·힐링', culture: '역사·문화', scenic: '바다·절경', hot: '최신 핫플' };
+  const catColors = { nature: '#06d6a0', culture: '#f4a261', scenic: '#118ab2', hot: '#ef476f' };
+  const catLabel = catLabels[s.category] || '';
+  const catColor = catColors[s.category] || '#8b5cf6';
+  const hotHtml = s.hot ? '<span class="hot-tag">NEW</span>' : '';
+  const foodHtml = s.foods ? '<div class="food-list">' + s.foods.map(f => '<span class="food-chip">' + f + '</span>').join('') + '</div>' : '';
+  const priceHtml = s.price ? '<span class="price-tag">' + s.price + '</span>' : '';
+  return '<div class="spot-card" style="border-left-color:' + catColor + '" onclick="flyToNearby(\'' + s.id + '\')">' +
+    '<div class="spot-num" style="background:' + catColor + '">' + s.id.replace('N','') + '</div>' +
+    '<h3>' + s.nameKo + ' ' + hotHtml + '</h3>' +
+    '<div class="chinese">' + s.chinese + ' <span style="font-size:10px;color:white;background:' + catColor + ';padding:1px 6px;border-radius:8px;margin-left:4px;">' + catLabel + '</span></div>' +
+    '<div class="transport">' + s.transport + '</div>' +
+    '<div class="desc">' + s.descKo + '</div>' +
+    priceHtml + foodHtml +
+    '<div class="card-gmap" onclick="event.stopPropagation()">' +
+    '<a href="https://www.google.com/maps/search/?api=1&query=' + s.lat + ',' + s.lng + '" target="_blank" class="gmap-btn">Google Maps &#8599;</a>' +
+    '<a href="https://www.google.com/maps/dir/?api=1&destination=' + s.lat + ',' + s.lng + '&travelmode=transit" target="_blank" class="gmap-btn gmap-nav">길찾기 &#8599;</a>' +
+    '</div></div>';
+}
+
+function flyToNearby(id) {
+  const found = nearbyMarkers.find(m => m.spot.id === id);
+  if (found) {
+    map.flyTo([found.spot.lat, found.spot.lng], 14, { duration: 0.8 });
+    setTimeout(() => found.marker.openPopup(), 800);
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderNearby() {
+  const nature = NEARBY_SPOTS.filter(s => s.category === 'nature');
+  const culture = NEARBY_SPOTS.filter(s => s.category === 'culture');
+  const scenic = NEARBY_SPOTS.filter(s => s.category === 'scenic');
+  const hot = NEARBY_SPOTS.filter(s => s.category === 'hot');
+
+  document.getElementById('content').innerHTML =
+    '<div class="time-block">' +
+      '<div class="time-label" style="background:#06d6a0;color:white;">&#9968; 자연 & 힐링</div>' +
+      nature.map(s => nearbyCard(s)).join('') +
+    '</div>' +
+    '<div class="time-block">' +
+      '<div class="time-label" style="background:#f4a261;color:white;">&#127963; 역사 & 문화</div>' +
+      culture.map(s => nearbyCard(s)).join('') +
+    '</div>' +
+    '<div class="time-block">' +
+      '<div class="time-label" style="background:#118ab2;color:white;">&#127754; 바다 & 절경</div>' +
+      scenic.map(s => nearbyCard(s)).join('') +
+    '</div>' +
+    '<div class="time-block">' +
+      '<div class="time-label" style="background:#ef476f;color:white;">&#128293; 2025~2026 핫플</div>' +
+      hot.map(s => nearbyCard(s)).join('') +
+    '</div>' +
+    '<div style="padding:10px;background:#f0f7ff;border-radius:12px;font-size:12px;line-height:1.6;margin-top:4px;">' +
+      '<strong>TIP</strong> 근교 투어는 KKday/Klook에서 반일/일일 투어를 예약하면 교통 걱정 없이 편합니다.<br>' +
+      '인기 조합: 예류+지우펀 / 핑시선+허우통 / 양명산+베이터우 / 우라이+단수이' +
+    '</div>';
 }
 
 function renderInfo() {
