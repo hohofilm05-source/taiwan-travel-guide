@@ -683,21 +683,21 @@ const DAY1_SPOTS = [
   {
     id: 1, name: 'Longshan Temple', nameKo: '룽산쓰', chinese: '龍山寺',
     lat: 25.0372, lng: 121.4998,
-    transport: '호텔에서 도보 5분',
+    transport: '🏠 호텔→도보 5분 (룽산쓰역 2번 출구 방향)',
     descKo: '1738년 건립, 불교·도교·민간신앙을 모두 품은 종교적 포용의 상징. 2차대전 폭격 속에서도 무사한 관세음보살상이 영험한 정신적 지주로 추앙.',
     price: '무료', time: 'morning'
   },
   {
     id: 2, name: 'Bopiliao Historic Block', nameKo: '보피리아오 역사거리', chinese: '剝皮寮',
     lat: 25.0377, lng: 121.5013,
-    transport: '도보 5분',
+    transport: '🚶 룽산쓰→도보 5분 (광저우거리 방향)',
     descKo: '1930년대 목재 무역의 번성기를 보여주는 붉은 벽돌 아치형 건축물. 과거 상업 중심지의 정취를 고스란히 보존한 리빙 아카이브.',
     price: '무료', time: 'morning'
   },
   {
     id: 3, name: 'Ximending', nameKo: '시먼딩', chinese: '西門町',
     lat: 25.0421, lng: 121.5081,
-    transport: 'MRT 1정거장',
+    transport: '🚇 룽산쓰역→반난선(藍) 1정거장→시먼역 6번 출구 (NT$20, 2분)',
     descKo: '타이페이의 명동! 1908년 서문홍루(극장+시장)가 현재 디자인숍·갤러리로 변신. 역사와 젊음의 에너지가 극적으로 대비되는 거리.',
     price: null, time: 'morning',
     foods: ['아종면선 NT$55~', '톈진총좌빙 NT$35~', '루로우판(滷肉飯) NT$40~']
@@ -705,7 +705,7 @@ const DAY1_SPOTS = [
   {
     id: 'L1', nameKo: '점심 추천', chinese: '午餐推薦',
     lat: 25.0421, lng: 121.5081, isMeal: true,
-    transport: '시먼딩 주변',
+    transport: '🚶 시먼딩 내 도보 이동',
     descKo: '시먼딩 관광 후 점심! 길거리 간식부터 현지인 훠궈까지.',
     price: null, time: 'lunch',
     restaurants: [
@@ -717,14 +717,14 @@ const DAY1_SPOTS = [
   {
     id: 4, name: 'CKS Memorial Hall', nameKo: '중정기념당', chinese: '中正紀念堂',
     lat: 25.0346, lng: 121.5219,
-    transport: 'MRT 3정거장',
+    transport: '🚇 시먼역→반난선(藍) 또는 쑹산신뎬선(綠) 1정거장→중정기념당역 5번 출구 (NT$20, 3분)',
     descKo: '89개 계단(장제스 향년 상징)과 자유광장이 대만 민주주의의 현장. 매 정시 위병 교대식 필수! 인근 228평화공원도 추천.',
     price: '무료', time: 'afternoon'
   },
   {
     id: 5, name: 'Yongkang Street', nameKo: '융캉제', chinese: '永康街',
     lat: 25.0330, lng: 121.5297,
-    transport: 'MRT 동먼역',
+    transport: '🚇 중정기념당역→쑹산신뎬선(綠) 1정거장→동먼역 5번 출구→도보 3분 (NT$20, 5분)',
     descKo: '50년 전통 딘타이펑 본점을 필두로 로컬 길거리 음식과 감각적 카페·디자인숍이 공존. 로컬 감성과 트렌디의 완벽한 조화.',
     price: null, time: 'afternoon',
     foods: ['딘타이펑 샤오롱바오 NT$250~', '카오지 두장 NT$80~', '스무디하우스 망고빙수 NT$200~'],
@@ -737,21 +737,21 @@ const DAY1_SPOTS = [
   {
     id: '5b', name: 'Huashan 1914', nameKo: '화산1914 창의문화원구', chinese: '華山1914文創園區',
     lat: 25.0441, lng: 121.5295,
-    transport: 'MRT 중샤오신성역 도보 5분',
+    transport: '🚇 동먼역→쑹산신뎬선(綠) 또는 중허신루선(橘) →중샤오신성역 4번 출구→도보 5분 (NT$20, 10분)',
     descKo: '1914년 일본식 양조장을 예술 창작기지로 재생! 앤티크 골조+현대 전시관·공연장·디자인숍. 산업유산 재생의 성공 사례.',
     price: '무료', time: 'afternoon', hot: true
   },
   {
     id: 6, name: 'Taipei 101', nameKo: '타이페이 101', chinese: '台北101',
     lat: 25.0340, lng: 121.5645,
-    transport: 'MRT 타이페이101역',
+    transport: '🚇 중샤오신성역→반난선(藍) 3정거장→시정부역→도보 10분 또는 단수이신이선(紅) 타이페이101역 (NT$25, 15분)',
     descKo: '대나무 마디와 숫자 8(번영)을 형상화한 508m 마천루. 89층 전망대 시티뷰 필수! 인근 쓰쓰남촌(1940년대 군인마을)과의 대비도 포토존.',
     price: 'NT$600', time: 'afternoon'
   },
   {
     id: 'D1', nameKo: '저녁 추천', chinese: '晚餐推薦',
     lat: 25.0500, lng: 121.5200, isMeal: true,
-    transport: '닝샤야시장 or 중산구',
+    transport: '🚇 타이페이101역→단수이신이선(紅) 4정거장→중산역 (NT$25, 12분)',
     descKo: '야시장 먹방 vs 레스토랑 중 선택! 둘 다 추천.',
     price: null, time: 'dinner',
     restaurants: [
@@ -763,7 +763,7 @@ const DAY1_SPOTS = [
   {
     id: 7, name: 'Ningxia Night Market', nameKo: '닝샤 야시장', chinese: '寧夏夜市',
     lat: 25.0557, lng: 121.5155,
-    transport: 'MRT 중산역',
+    transport: '🚶 중산역 1번 출구→도보 8분 (난징서로 방향) / 솽롄역 1번 출구→도보 5분',
     descKo: '미슐랭 빕구르망 맛집 포진! 로컬 미식의 정수. 규모는 작지만 맛집 밀도 최고. 디화제·중산 치펑제 골목과 함께 둘러보기 추천.',
     price: null, time: 'evening',
     foods: ['류위즈 타로볼 NT$60~', '지파이(닭튀김)', '루웨이(조림)', '버블티']
@@ -774,14 +774,14 @@ const DAY2_SPOTS = [
   {
     id: 8, name: 'National Palace Museum', nameKo: '국립고궁박물관', chinese: '國立故宮博物院',
     lat: 25.1024, lng: 121.5485,
-    transport: 'MRT 스린역→버스 약 10분 / 택시 추천',
+    transport: '🏠 호텔→룽산쓰역→반난선(藍)→타이페이역 환승→단수이신이선(紅)→스린역 1번 출구→버스304/紅30 약 10분 (NT$40, 총 35분)',
     descKo: '인류 문명의 보물창고! 69만점 소장. 옥 배추 "취옥백채", 동파육 "육형석", 17층 동심원 "상아투구"는 장인 정신의 경지. 반나절 추천.',
     price: 'NT$350', time: 'morning'
   },
   {
     id: 9, name: 'Jiufen', nameKo: '지우펀', chinese: '九份',
     lat: 25.1092, lng: 121.8445,
-    transport: '루이팡역에서 버스 약 15분',
+    transport: '🚇🚌 스린역→단수이신이선(紅)→타이페이역→TRA기차→루이팡역(NT$49, 40분)→788/965버스→지우펀(NT$15, 15분) / TIP: 965번은 베이먼역에서 탑승 추천',
     descKo: '금광마을 역사 위로 붉은 등불이 켜지는 "시간 여행"의 감동. 좁은 계단 찻집에서 차 한잔과 야경 필수! TIP: 965번 버스는 베이먼역에서 타야 좌석 확보.',
     price: null, time: 'afternoon',
     foods: ['땅콩아이스크림 크레이프', '아간이위엔 타로볼 NT$55~', '산위 찻집 우롱차']
@@ -789,7 +789,7 @@ const DAY2_SPOTS = [
   {
     id: 'L2', nameKo: '점심 추천', chinese: '午餐推薦',
     lat: 25.1024, lng: 121.5485, isMeal: true,
-    transport: '고궁박물관 내/스린역 주변',
+    transport: '🚶 고궁박물관 내 4층 또는 버스로 스린역 복귀→주변 맛집',
     descKo: '고궁 관람 후 점심! 박물관 내 식당부터 스린 로컬 맛집까지.',
     price: null, time: 'lunch',
     restaurants: [
@@ -801,7 +801,7 @@ const DAY2_SPOTS = [
   {
     id: 'D2', nameKo: '저녁 추천', chinese: '晚餐推薦',
     lat: 25.0506, lng: 121.5775, isMeal: true,
-    transport: '송산역/시정부역 주변',
+    transport: '🚌🚇 지우펀→788버스→루이팡역→TRA기차→타이페이역 (NT$64, 약 55분) 시내 복귀 후',
     descKo: '시내 복귀 후 저녁! 야시장 먹방 or 레스토랑 선택.',
     price: null, time: 'dinner',
     restaurants: [
@@ -813,21 +813,21 @@ const DAY2_SPOTS = [
   {
     id: 10, name: 'Songshan Cultural Park', nameKo: '송산문창원구', chinese: '松山文創園區',
     lat: 25.0436, lng: 121.5607,
-    transport: 'MRT 시정부역',
+    transport: '🚇 타이페이역→반난선(藍) 3정거장→시정부역 2번 출구→도보 5분 (NT$25, 15분)',
     descKo: '옛 담배공장의 레트로 외관 속 에슬라이트 스펙트럼·디자인숍·전시관이 공존. 인근 랴오허제 야시장(후추빵 명물)과 쑹산츠유궁 야경도 추천.',
     price: '무료', time: 'evening', hot: true
   },
   {
     id: 11, name: 'Dadaocheng', nameKo: '대도청', chinese: '大稻埕',
     lat: 25.0562, lng: 121.5102,
-    transport: 'MRT 다차오터우역',
+    transport: '🚇 시정부역→반난선(藍)→타이페이역 환승→중허신루선(橘) 1정거장→다차오터우역 1번 출구→도보 10분 (NT$25, 20분)',
     descKo: '디화제 — 100년 넘은 약재상·건어물 가게 사이로 세련된 티하우스·편집숍이 공존. 다다오청 부두 컨테이너마켓에서 강변 노을 감상 필수!',
     price: null, time: 'evening', hot: true
   },
   {
     id: '11b', name: 'Carrefour Guilin', nameKo: '까르푸 꾸이린점', chinese: '家樂福 桂林店',
     lat: 25.0398, lng: 121.5048,
-    transport: '시먼역 1번 출구 도보 7분 / 호텔 도보 10분',
+    transport: '🚇 다차오터우역→중허신루선(橘) 2정거장→시먼역 1번 출구→도보 7분 (NT$20, 12분) / 호텔에서 도보 10분',
     descKo: '24시간 운영! 귀국 전 선물 쇼핑 성지. 파인애플케이크, 대만 차, 누가크래커, 샤차장 등. 2·3·6층 보관함 이용 가능.',
     price: null, time: 'evening',
     foods: ['파인애플케이크', '대만 차 선물세트', '누가크래커', '샤차장 소스']
@@ -835,7 +835,7 @@ const DAY2_SPOTS = [
   {
     id: 12, name: 'Massage & Relax', nameKo: '마사지로 마무리', chinese: '足體養生',
     lat: 25.0380, lng: 121.5010,
-    transport: '호텔 주변 도보',
+    transport: '🚶 까르푸에서 도보 5분 (호텔 주변 룽산쓰역 일대)',
     descKo: '발마사지/전신마사지로 여행 마무리. 시먼딩 6스타, 룽산쓰 주변 추천.',
     price: 'NT$500~800 (60min)', time: 'evening'
   }
