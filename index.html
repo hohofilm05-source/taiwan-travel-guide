@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a1a2e">
+<title>대만 2일 여행 가이드</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  :root {
+    --primary: #1a1a2e;
+    --accent-blue: #4361ee;
+    --accent-orange: #f77f00;
+    --accent-green: #06d6a0;
+    --accent-red: #ef476f;
+    --bg: #f8f9fa;
+    --card-bg: #ffffff;
+    --text: #212529;
+    --text-light: #6c757d;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --radius: 16px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, var(--primary) 0%, #16213e 100%);
+    color: white;
+    padding: 20px 16px 16px;
+    position: relative;
+    z-index: 10;
+  }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 4px;
+    letter-spacing: -0.5px;
+  }
+  .header .subtitle {
+    font-size: 13px;
+    opacity: 0.8;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .header .subtitle .icon { font-size: 14px; }
+
+  /* Search Bar */
+  .search-bar {
+    display: flex;
+    padding: 8px 12px;
+    background: var(--primary);
+    gap: 6px;
+    position: relative;
+    z-index: 10;
+  }
+  .search-bar input {
+    flex: 1;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    background: rgba(255,255,255,0.95);
+    color: var(--text);
+    outline: none;
+  }
+  .search-bar input::placeholder { color: #adb5bd; font-size: 13px; }
+  .search-bar button {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 10px;
+    background: var(--accent-blue);
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .search-bar .clear-btn {
+    background: #6c757d;
+    font-size: 14px;
+    width: 36px;
+  }
+  .search-results {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    top: auto;
+    z-index: 500;
+    background: white;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    max-height: 220px;
+    overflow-y: auto;
+    display: none;
+  }
+  .search-results.show { display: block; }
+  .search-result-item {
+    padding: 10px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f3f5;
+    font-size: 13px;
+    line-height: 1.4;
+    transition: background 0.1s;
+  }
+  .search-result-item:hover, .search-result-item:active { background: #e8f4fd; }
+  .search-result-item .result-name { font-weight: 700; color: var(--text); }
+  .search-result-item .result-addr { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+
+  /* POI Bar */
+  .poi-bar {
+    display: flex;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--primary);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .poi-bar::-webkit-scrollbar { display: none; }
+  .poi-chip {
+    padding: 6px 12px;
+    border: 1.5px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    background: transparent;
+    color: rgba(255,255,255,0.8);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .poi-chip:active, .poi-chip.active {
+    background: white;
+    color: var(--primary);
+    border-color: white;
+  }
+  .poi-chip.poi-clear {
+    background: rgba(239,71,111,0.8);
+    border-color: transparent;
+    color: white;
+  }
+
+  /* POI markers */
+  .poi-popup { font-size: 12px; line-height: 1.5; min-width: 140px; }
+  .poi-popup strong { font-size: 13px; }
+  .poi-popup .poi-cat { font-size: 10px; color: white; background: #6c757d; padding: 1px 6px; border-radius: 8px; }
+  .poi-popup .poi-addr { font-size: 11px; color: #6c757d; margin-top: 3px; }
+
+  /* My Location Button */
+  .my-loc-btn {
+    background: white;
+    border: none;
+    border-radius: 10px;
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  }
+  .my-loc-btn.active { background: #e8f4fd; }
+
+  /* Route Panel */
+  .route-panel {
+    display: none;
+    background: white;
+    border-top: 3px solid var(--accent-blue);
+    max-height: 40vh;
+    overflow-y: auto;
+    z-index: 150;
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.1);
+  }
+  .route-panel.show { display: block; }
+  .route-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    font-size: 15px;
+    font-weight: 700;
+    border-bottom: 1px solid #eee;
+    position: sticky;
+    top: 0;
+    background: white;
+  }
+  .route-close {
+    background: none; border: none; font-size: 18px;
+    color: var(--text-light); cursor: pointer; padding: 4px;
+  }
+  .route-info {
+    padding: 10px 16px;
+    display: flex;
+    gap: 16px;
+    background: #f0f7ff;
+    font-size: 13px;
+    flex-wrap: wrap;
+  }
+  .route-info .ri-item {
+    display: flex; align-items: center; gap: 4px;
+  }
+  .route-info .ri-val { font-weight: 800; font-size: 16px; color: var(--accent-blue); }
+  .route-info .ri-unit { color: var(--text-light); }
+  .route-steps {
+    padding: 8px 16px 4px;
+  }
+  .route-step {
+    display: flex;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f5f5f5;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .route-step:last-child { border-bottom: none; }
+  .step-icon {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: #e9ecef; display: flex; align-items: center;
+    justify-content: center; font-size: 14px; flex-shrink: 0;
+  }
+  .step-text { flex: 1; color: var(--text); }
+  .step-dist { font-size: 11px; color: var(--text-light); white-space: nowrap; }
+  .route-actions {
+    padding: 8px 16px 12px;
+    display: flex;
+    gap: 8px;
+  }
+  .route-google-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    background: #4285f4;
+    color: white;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  /* Map Container */
+  #map {
+    width: 100%;
+    height: 45vh;
+    min-height: 300px;
+    z-index: 1;
+  }
+
+  /* Day Toggle */
+  .day-toggle {
+    display: flex;
+    gap: 0;
+    padding: 12px 16px;
+    background: white;
+    border-bottom: 1px solid #eee;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .day-btn {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #e9ecef;
+    background: white;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .day-btn:first-child { border-radius: 10px 0 0 10px; }
+  .day-btn:nth-child(2) { border-left: none; border-right: none; }
+  .day-btn:last-child { border-radius: 0 10px 10px 0; }
+  .day-btn.active-day1 {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: white;
+  }
+  .day-btn.active-day2 {
+    background: var(--accent-orange);
+    border-color: var(--accent-orange);
+    color: white;
+  }
+  .day-btn.active-info {
+    background: var(--accent-green);
+    border-color: var(--accent-green);
+    color: white;
+  }
+
+  /* Content Area */
+  .content {
+    padding: 12px 16px 100px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* Time Block */
+  .time-block {
+    margin-bottom: 20px;
+  }
+  .time-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-light);
+    margin-bottom: 10px;
+    padding: 4px 10px;
+    background: #e9ecef;
+    border-radius: 20px;
+  }
+
+  /* Spot Card */
+  .spot-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    border-left: 4px solid var(--accent-blue);
+    position: relative;
+  }
+  .spot-card:active { transform: scale(0.98); }
+  .spot-card.day2 { border-left-color: var(--accent-orange); }
+  .spot-card.food { border-left-color: var(--accent-red); }
+  .spot-card.info-card { border-left-color: var(--accent-green); }
+
+  .spot-num {
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--accent-blue);
+    color: white;
+    font-size: 13px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  }
+  .spot-card.day2 .spot-num { background: var(--accent-orange); }
+  .spot-card.food .spot-num { background: var(--accent-red); }
+
+  .spot-card h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .spot-card .chinese { font-size: 12px; color: var(--text-light); margin-bottom: 6px; }
+  .spot-card .transport {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    background: #e8f4fd;
+    color: #1976d2;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+  }
+  .spot-card .desc {
+    font-size: 13px;
+    color: var(--text-light);
+    line-height: 1.6;
+  }
+  .spot-card .desc strong { color: var(--text); }
+  .spot-card .price-tag {
+    display: inline-block;
+    background: #fff3cd;
+    color: #856404;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-top: 6px;
+  }
+  .spot-card .food-list {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .food-chip {
+    background: #fde8e8;
+    color: #c0392b;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 12px;
+    white-space: nowrap;
+  }
+
+  /* Restaurant detail list */
+  .rest-list {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .rest-item {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 10px 12px;
+    border-left: 3px solid var(--accent-red);
+  }
+  .rest-name {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: var(--text);
+  }
+  .rest-desc {
+    font-size: 12px;
+    color: var(--text-light);
+    line-height: 1.5;
+    margin-bottom: 4px;
+  }
+  .rest-tag {
+    display: inline-block;
+    background: var(--accent-red);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 8px;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  /* Google Maps buttons in cards */
+  .card-gmap {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #f1f3f5;
+  }
+  .gmap-btn {
+    padding: 5px 10px;
+    border-radius: 8px;
+    background: #4285f4;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .gmap-btn.gmap-nav { background: #34a853; }
+
+  /* Info Section */
+  .info-section {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .info-header {
+    padding: 14px 16px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+  }
+  .info-header .icon { font-size: 18px; margin-right: 8px; }
+  .info-header .arrow {
+    transition: transform 0.2s;
+    font-size: 12px;
+    color: var(--text-light);
+  }
+  .info-header.open .arrow { transform: rotate(180deg); }
+  .info-body {
+    padding: 0 16px 14px;
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--text-light);
+    display: none;
+  }
+  .info-body.open { display: block; }
+  .info-body table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-top: 8px;
+  }
+  .info-body th {
+    background: #f1f3f5;
+    padding: 8px 6px;
+    text-align: left;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .info-body td {
+    padding: 8px 6px;
+    border-bottom: 1px solid #f1f3f5;
+  }
+  .info-body ul { padding-left: 18px; }
+  .info-body li { margin-bottom: 4px; }
+
+  /* Hotplace tag */
+  .hot-tag {
+    display: inline-block;
+    background: linear-gradient(135deg, #ff6b6b, #ffa502);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 4px;
+  }
+
+  /* Legend on map */
+  .map-legend {
+    background: white;
+    padding: 10px 14px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    font-size: 12px;
+    line-height: 1.8;
+  }
+  .map-legend .dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  /* Leaflet popup */
+  .leaflet-popup-content {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    min-width: 160px;
+  }
+  .leaflet-popup-content strong { font-size: 14px; }
+  .popup-transport {
+    font-size: 11px;
+    color: #1976d2;
+    margin-top: 4px;
+  }
+
+  /* Scroll to top */
+  .scroll-top {
+    position: fixed;
+    bottom: 20px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    display: none;
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .scroll-top.show { display: flex; }
+
+  @media (min-width: 768px) {
+    .header h1 { font-size: 28px; }
+    #map { height: 50vh; }
+    .content { padding: 16px 24px 100px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <h1>대만 2일 여행 가이드</h1>
+  <div class="subtitle">
+    <span class="icon">&#127968;</span>
+    시저메트로 타이페이 &middot; MRT 룽산쓰역 2번 출구 도보 3분
+  </div>
+</div>
+
+<!-- Search Bar -->
+<div class="search-bar">
+  <input type="text" id="searchInput" placeholder="장소 검색 (예: 타이페이역, 시먼딩, 九份...)" autocomplete="off" />
+  <button id="searchBtn" onclick="searchPlace()">&#128269;</button>
+  <button id="clearSearchBtn" class="clear-btn" onclick="clearSearch()" style="display:none">&#10005;</button>
+</div>
+<div id="searchResults" class="search-results"></div>
+
+<!-- POI Filter -->
+<div class="poi-bar">
+  <button class="poi-chip" data-cat="restaurant" onclick="togglePOI(this,'restaurant')">&#127860; 식당</button>
+  <button class="poi-chip" data-cat="cafe" onclick="togglePOI(this,'cafe')">&#9749; 카페</button>
+  <button class="poi-chip" data-cat="tourism" onclick="togglePOI(this,'tourism')">&#127963; 관광지</button>
+  <button class="poi-chip" data-cat="convenience" onclick="togglePOI(this,'convenience')">&#127978; 편의점</button>
+  <button class="poi-chip" data-cat="station" onclick="togglePOI(this,'station')">&#128643; 지하철</button>
+  <button class="poi-chip poi-clear" onclick="clearAllPOI()" style="display:none" id="poiClearBtn">&#10005; 초기화</button>
+</div>
+
+<!-- Map -->
+<div id="map"></div>
+
+<!-- Route Panel -->
+<div id="routePanel" class="route-panel">
+  <div class="route-panel-header">
+    <span id="routePanelTitle">길찾기</span>
+    <button onclick="closeRoutePanel()" class="route-close">&#10005;</button>
+  </div>
+  <div id="routeInfo" class="route-info"></div>
+  <div id="routeSteps" class="route-steps"></div>
+  <div class="route-actions">
+    <button id="routeGoogleBtn" class="route-google-btn" onclick="openGoogleMaps()">Google Maps에서 열기</button>
+  </div>
+</div>
+
+<!-- Day Toggle -->
+<div class="day-toggle">
+  <button class="day-btn active-day1" onclick="showDay(1)" id="btn-day1">DAY 1 시내</button>
+  <button class="day-btn" onclick="showDay(2)" id="btn-day2">DAY 2 근교</button>
+  <button class="day-btn" onclick="showDay(0)" id="btn-info">여행정보</button>
+</div>
+
+<!-- Content -->
+<div class="content" id="content"></div>
+
+<!-- Scroll to top -->
+<button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8593;</button>
+
+<script>
+// ─── DATA ───
+const HOTEL = { name: 'Caesar Metro Taipei', lat: 25.0336, lng: 121.4997 };
+
+const DAY1_SPOTS = [
+  {
+    id: 1, name: 'Longshan Temple', nameKo: '룽산쓰', chinese: '龍山寺',
+    lat: 25.0372, lng: 121.4998,
+    transport: '호텔에서 도보 5분',
+    descKo: '1738년 건립, 불교·도교·민간신앙을 모두 품은 종교적 포용의 상징. 2차대전 폭격 속에서도 무사한 관세음보살상이 영험한 정신적 지주로 추앙.',
+    price: '무료', time: 'morning'
+  },
+  {
+    id: 2, name: 'Bopiliao Historic Block', nameKo: '보피리아오 역사거리', chinese: '剝皮寮',
+    lat: 25.0377, lng: 121.5013,
+    transport: '도보 5분',
+    descKo: '1930년대 목재 무역의 번성기를 보여주는 붉은 벽돌 아치형 건축물. 과거 상업 중심지의 정취를 고스란히 보존한 리빙 아카이브.',
+    price: '무료', time: 'morning'
+  },
+  {
+    id: 3, name: 'Ximending', nameKo: '시먼딩', chinese: '西門町',
+    lat: 25.0421, lng: 121.5081,
+    transport: 'MRT 1정거장',
+    descKo: '타이페이의 명동! 1908년 서문홍루(극장+시장)가 현재 디자인숍·갤러리로 변신. 역사와 젊음의 에너지가 극적으로 대비되는 거리.',
+    price: null, time: 'morning',
+    foods: ['아종면선 NT$55~', '톈진총좌빙 NT$35~', '루로우판(滷肉飯) NT$40~']
+  },
+  {
+    id: 'L1', nameKo: '점심 추천', chinese: '午餐推薦',
+    lat: 25.0421, lng: 121.5081, isMeal: true,
+    transport: '시먼딩 주변',
+    descKo: '시먼딩 관광 후 점심! 길거리 간식부터 현지인 훠궈까지.',
+    price: null, time: 'lunch',
+    restaurants: [
+      { name: '아종면선 (阿宗麵線)', desc: '시먼딩 대표! 서서 먹는 곱창국수. 줄이 길어도 회전 빠름. 대/소 사이즈 선택.', price: 'NT$55~', tag: '필수' },
+      { name: '톈진총좌빙 (天津蔥抓餅)', desc: '바삭한 파전병에 계란/치즈 토핑 추가 가능. 간식 겸 가벼운 점심으로 딱!', price: 'NT$35~', tag: '간식' },
+      { name: '왕쟈오 석두훠궈 (旺角石頭火鍋)', desc: '돌솥에 재료를 먼저 볶고 육수를 부어 먹는 시먼딩 현지인 훠궈. 샤차장 소스가 일품.', price: 'NT$350~', tag: '로컬' }
+    ]
+  },
+  {
+    id: 4, name: 'CKS Memorial Hall', nameKo: '중정기념당', chinese: '中正紀念堂',
+    lat: 25.0346, lng: 121.5219,
+    transport: 'MRT 3정거장',
+    descKo: '89개 계단(장제스 향년 상징)과 자유광장이 대만 민주주의의 현장. 매 정시 위병 교대식 필수! 인근 228평화공원도 추천.',
+    price: '무료', time: 'afternoon'
+  },
+  {
+    id: 5, name: 'Yongkang Street', nameKo: '융캉제', chinese: '永康街',
+    lat: 25.0330, lng: 121.5297,
+    transport: 'MRT 동먼역',
+    descKo: '50년 전통 딘타이펑 본점을 필두로 로컬 길거리 음식과 감각적 카페·디자인숍이 공존. 로컬 감성과 트렌디의 완벽한 조화.',
+    price: null, time: 'afternoon',
+    foods: ['딘타이펑 샤오롱바오 NT$250~', '카오지 두장 NT$80~', '스무디하우스 망고빙수 NT$200~'],
+    restaurants: [
+      { name: '딘타이펑 본점 (鼎泰豐)', desc: '미슐랭 1스타. 18겹 샤오롱바오가 시그니처. 대기 30분~1시간 각오!', price: 'NT$250~', tag: '필수' },
+      { name: '카오지 (高記)', desc: '융캉제 50년 전통. 상하이식 생전빵(生煎包)과 샤오롱바오가 유명. 딘타이펑보다 한산!', price: 'NT$200~', tag: '로컬' },
+      { name: '스무디하우스 (思慕昔)', desc: 'CNN 소개 망고빙수 맛집. 눈꽃처럼 부드러운 설화빙 위에 생망고가 듬뿍.', price: 'NT$200~', tag: '디저트' }
+    ]
+  },
+  {
+    id: '5b', name: 'Huashan 1914', nameKo: '화산1914 창의문화원구', chinese: '華山1914文創園區',
+    lat: 25.0441, lng: 121.5295,
+    transport: 'MRT 중샤오신성역 도보 5분',
+    descKo: '1914년 일본식 양조장을 예술 창작기지로 재생! 앤티크 골조+현대 전시관·공연장·디자인숍. 산업유산 재생의 성공 사례.',
+    price: '무료', time: 'afternoon', hot: true
+  },
+  {
+    id: 6, name: 'Taipei 101', nameKo: '타이페이 101', chinese: '台北101',
+    lat: 25.0340, lng: 121.5645,
+    transport: 'MRT 타이페이101역',
+    descKo: '대나무 마디와 숫자 8(번영)을 형상화한 508m 마천루. 89층 전망대 시티뷰 필수! 인근 쓰쓰남촌(1940년대 군인마을)과의 대비도 포토존.',
+    price: 'NT$600', time: 'afternoon'
+  },
+  {
+    id: 'D1', nameKo: '저녁 추천', chinese: '晚餐推薦',
+    lat: 25.0500, lng: 121.5200, isMeal: true,
+    transport: '닝샤야시장 or 중산구',
+    descKo: '야시장 먹방 vs 레스토랑 중 선택! 둘 다 추천.',
+    price: null, time: 'dinner',
+    restaurants: [
+      { name: '닝샤야시장 먹방코스', desc: '류위즈 타로볼→지파이(닭튀김)→루웨이(조림)→버블티 순서 추천. 1인 NT$200이면 충분!', price: 'NT$200~', tag: '야시장' },
+      { name: '키키레스토랑 (Kiki餐廳)', desc: '한국인 필수 대만 쓰촨요리. 마라두부, 마라지딩이 시그니처. 중산구 위치. 예약 추천!', price: 'NT$300~', tag: '인기' },
+      { name: '우라오 마라훠궈 (五老火鍋)', desc: '시먼딩점. 1인 훠궈 가능, 한국어 메뉴판 있음. 마라+백탕 이중냄비 추천.', price: 'NT$400~', tag: '훠궈' }
+    ]
+  },
+  {
+    id: 7, name: 'Ningxia Night Market', nameKo: '닝샤 야시장', chinese: '寧夏夜市',
+    lat: 25.0557, lng: 121.5155,
+    transport: 'MRT 중산역',
+    descKo: '미슐랭 빕구르망 맛집 포진! 로컬 미식의 정수. 규모는 작지만 맛집 밀도 최고. 디화제·중산 치펑제 골목과 함께 둘러보기 추천.',
+    price: null, time: 'evening',
+    foods: ['류위즈 타로볼 NT$60~', '지파이(닭튀김)', '루웨이(조림)', '버블티']
+  }
+];
+
+const DAY2_SPOTS = [
+  {
+    id: 8, name: 'National Palace Museum', nameKo: '국립고궁박물관', chinese: '國立故宮博物院',
+    lat: 25.1024, lng: 121.5485,
+    transport: 'MRT 스린역→버스 약 10분 / 택시 추천',
+    descKo: '인류 문명의 보물창고! 69만점 소장. 옥 배추 "취옥백채", 동파육 "육형석", 17층 동심원 "상아투구"는 장인 정신의 경지. 반나절 추천.',
+    price: 'NT$350', time: 'morning'
+  },
+  {
+    id: 9, name: 'Jiufen', nameKo: '지우펀', chinese: '九份',
+    lat: 25.1092, lng: 121.8445,
+    transport: '루이팡역에서 버스 약 15분',
+    descKo: '금광마을 역사 위로 붉은 등불이 켜지는 "시간 여행"의 감동. 좁은 계단 찻집에서 차 한잔과 야경 필수! TIP: 965번 버스는 베이먼역에서 타야 좌석 확보.',
+    price: null, time: 'afternoon',
+    foods: ['땅콩아이스크림 크레이프', '아간이위엔 타로볼 NT$55~', '산위 찻집 우롱차']
+  },
+  {
+    id: 'L2', nameKo: '점심 추천', chinese: '午餐推薦',
+    lat: 25.1024, lng: 121.5485, isMeal: true,
+    transport: '고궁박물관 내/스린역 주변',
+    descKo: '고궁 관람 후 점심! 박물관 내 식당부터 스린 로컬 맛집까지.',
+    price: null, time: 'lunch',
+    restaurants: [
+      { name: '고궁 실란각 (故宮 至蘭閣)', desc: '박물관 4층 중식당. 관람 후 바로 식사 가능. 궁중 스타일 요리와 딤섬류.', price: 'NT$300~', tag: '편리' },
+      { name: '핫스타 지파이 (豪大大雞排)', desc: '얼굴만한 대왕 닭튀김! 스린역 근처. 대만 지파이의 원조격. 바삭+육즙 폭발.', price: 'NT$85', tag: '필수' },
+      { name: '황지루러우판 (黃記魯肉飯)', desc: '중산구 로컬 루로우판. 간장에 조린 돼지고기+밥. 대만 국민 소울푸드!', price: 'NT$40~', tag: '로컬' }
+    ]
+  },
+  {
+    id: 'D2', nameKo: '저녁 추천', chinese: '晚餐推薦',
+    lat: 25.0506, lng: 121.5775, isMeal: true,
+    transport: '송산역/시정부역 주변',
+    descKo: '시내 복귀 후 저녁! 야시장 먹방 or 레스토랑 선택.',
+    price: null, time: 'dinner',
+    restaurants: [
+      { name: '라오허제 야시장 (饒河街夜市)', desc: '송산역 바로 앞! 후추빵(胡椒餅)이 명물. 약초갈비탕, 고구마볼도 인기. 닝샤보다 큼.', price: 'NT$200~', tag: '야시장' },
+      { name: '마라위향궈 (辣府)', desc: '매콤한 마라 드라이훠궈(건식 볶음). 채소/고기/해산물 골라 볶아줌. 맥주와 찰떡!', price: 'NT$250~', tag: '마라' },
+      { name: '대도청 카페&디저트', desc: '일몰 감상 후 레트로 카페에서 대만 우롱차+파인애플케이크. 여유로운 마무리.', price: 'NT$150~', tag: '카페' }
+    ]
+  },
+  {
+    id: 10, name: 'Songshan Cultural Park', nameKo: '송산문창원구', chinese: '松山文創園區',
+    lat: 25.0436, lng: 121.5607,
+    transport: 'MRT 시정부역',
+    descKo: '옛 담배공장의 레트로 외관 속 에슬라이트 스펙트럼·디자인숍·전시관이 공존. 인근 랴오허제 야시장(후추빵 명물)과 쑹산츠유궁 야경도 추천.',
+    price: '무료', time: 'evening', hot: true
+  },
+  {
+    id: 11, name: 'Dadaocheng', nameKo: '대도청', chinese: '大稻埕',
+    lat: 25.0562, lng: 121.5102,
+    transport: 'MRT 다차오터우역',
+    descKo: '디화제 — 100년 넘은 약재상·건어물 가게 사이로 세련된 티하우스·편집숍이 공존. 다다오청 부두 컨테이너마켓에서 강변 노을 감상 필수!',
+    price: null, time: 'evening', hot: true
+  },
+  {
+    id: 12, name: 'Massage & Relax', nameKo: '마사지로 마무리', chinese: '足體養生',
+    lat: 25.0380, lng: 121.5010,
+    transport: '호텔 주변 도보',
+    descKo: '발마사지/전신마사지로 여행 마무리. 시먼딩 6스타, 룽산쓰 주변 추천.',
+    price: 'NT$500~800 (60min)', time: 'evening'
+  }
+];
+
+// ─── MAP SETUP ───
+const map = L.map('map', { zoomControl: false }).setView([25.045, 121.53], 13);
+L.control.zoom({ position: 'topright' }).addTo(map);
+
+// Google Maps tiles via Leaflet
+const gRoad = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+  subdomains: ['mt0','mt1','mt2','mt3'], maxZoom: 20,
+  attribution: '&copy; Google Maps'
+});
+const gSat = L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
+  subdomains: ['mt0','mt1','mt2','mt3'], maxZoom: 20,
+  attribution: '&copy; Google Maps'
+});
+gRoad.addTo(map);
+L.control.layers({ '도로 지도': gRoad, '위성 지도': gSat }, null, { position: 'topleft', collapsed: true }).addTo(map);
+
+function createIcon(num, color) {
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      width:30px;height:30px;border-radius:50%;
+      background:${color};color:white;
+      display:flex;align-items:center;justify-content:center;
+      font-size:13px;font-weight:800;
+      box-shadow:0 2px 8px rgba(0,0,0,0.3);
+      border:2px solid white;
+      font-family:-apple-system,sans-serif;
+    ">${num}</div>`,
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+    popupAnchor: [0, -18]
+  });
+}
+
+function createHotelIcon() {
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      width:36px;height:36px;border-radius:50%;
+      background:#e74c3c;color:white;
+      display:flex;align-items:center;justify-content:center;
+      font-size:18px;
+      box-shadow:0 2px 10px rgba(231,76,60,0.5);
+      border:3px solid white;
+    ">&#127968;</div>`,
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
+    popupAnchor: [0, -20]
+  });
+}
+
+// Hotel marker (always visible)
+const hotelMarker = L.marker([HOTEL.lat, HOTEL.lng], { icon: createHotelIcon() })
+  .addTo(map)
+  .bindPopup(`<strong>&#127968; 시저메트로 타이페이</strong><br><span class="popup-transport">MRT 룽산쓰역 2번 출구, 도보 3분</span><br><a href="https://www.google.com/maps/search/?api=1&query=${HOTEL.lat},${HOTEL.lng}" target="_blank" style="display:inline-block;margin-top:5px;padding:3px 10px;border-radius:6px;background:#4285f4;color:white;font-size:11px;text-decoration:none;font-weight:700;">Google Maps &#8599;</a>`);
+
+// Day layers
+const day1Layer = L.layerGroup();
+const day2Layer = L.layerGroup();
+const day1Markers = [];
+const day2Markers = [];
+
+function gmapLink(lat, lng, name) {
+  return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}&query_place_id=${encodeURIComponent(name)}`;
+}
+function gmapNavLink(lat, lng) {
+  return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=transit`;
+}
+function gmapBtns(lat, lng, name) {
+  return `<div style="margin-top:5px;display:flex;gap:4px;">
+    <a href="${gmapLink(lat,lng,name)}" target="_blank" style="padding:3px 8px;border-radius:6px;background:#4285f4;color:white;font-size:10px;text-decoration:none;font-weight:700;">Maps &#8599;</a>
+    <a href="${gmapNavLink(lat,lng)}" target="_blank" style="padding:3px 8px;border-radius:6px;background:#34a853;color:white;font-size:10px;text-decoration:none;font-weight:700;">길찾기 &#8599;</a>
+  </div>`;
+}
+
+DAY1_SPOTS.filter(s => !s.isMeal).forEach(s => {
+  const m = L.marker([s.lat, s.lng], { icon: createIcon(s.id, '#4361ee') })
+    .bindPopup(`<strong>${s.id}. ${s.nameKo}</strong><br>${s.chinese}<br><span class="popup-transport">${s.transport}</span>${gmapBtns(s.lat,s.lng,s.chinese)}`);
+  day1Layer.addLayer(m);
+  day1Markers.push({ marker: m, spot: s });
+});
+
+DAY2_SPOTS.filter(s => !s.isMeal).forEach(s => {
+  const m = L.marker([s.lat, s.lng], { icon: createIcon(s.id, '#f77f00') })
+    .bindPopup(`<strong>${s.id}. ${s.nameKo}</strong><br>${s.chinese}<br><span class="popup-transport">${s.transport}</span>${gmapBtns(s.lat,s.lng,s.chinese)}`);
+  day2Layer.addLayer(m);
+  day2Markers.push({ marker: m, spot: s });
+});
+
+// Route lines (exclude meal cards)
+const day1Coords = [
+  [HOTEL.lat, HOTEL.lng],
+  ...DAY1_SPOTS.filter(s => !s.isMeal).map(s => [s.lat, s.lng]),
+  [HOTEL.lat, HOTEL.lng]
+];
+const day2Coords = [
+  [HOTEL.lat, HOTEL.lng],
+  ...DAY2_SPOTS.filter(s => !s.isMeal).map(s => [s.lat, s.lng]),
+  [HOTEL.lat, HOTEL.lng]
+];
+
+const day1Route = L.polyline(day1Coords, {
+  color: '#4361ee', weight: 3, opacity: 0.6, dashArray: '8, 8'
+});
+const day2Route = L.polyline(day2Coords, {
+  color: '#f77f00', weight: 3, opacity: 0.6, dashArray: '8, 8'
+});
+
+day1Layer.addLayer(day1Route);
+day2Layer.addLayer(day2Route);
+
+// Legend
+const legend = L.control({ position: 'bottomleft' });
+legend.onAdd = function() {
+  const div = L.DomUtil.create('div', 'map-legend');
+  div.innerHTML = `
+    <span class="dot" style="background:#e74c3c"></span>숙소<br>
+    <span class="dot" style="background:#4361ee"></span>DAY 1 시내<br>
+    <span class="dot" style="background:#f77f00"></span>DAY 2 근교
+  `;
+  return div;
+};
+legend.addTo(map);
+
+// Initial state
+day1Layer.addTo(map);
+map.fitBounds(day1Route.getBounds(), { padding: [30, 30] });
+
+// ─── RENDER FUNCTIONS ───
+let currentDay = 1;
+
+function showDay(day) {
+  currentDay = day;
+  const b1 = document.getElementById('btn-day1');
+  const b2 = document.getElementById('btn-day2');
+  const bI = document.getElementById('btn-info');
+  b1.className = 'day-btn' + (day === 1 ? ' active-day1' : '');
+  b2.className = 'day-btn' + (day === 2 ? ' active-day2' : '');
+  bI.className = 'day-btn' + (day === 0 ? ' active-info' : '');
+
+  map.removeLayer(day1Layer);
+  map.removeLayer(day2Layer);
+
+  if (day === 1) {
+    day1Layer.addTo(map);
+    map.fitBounds(day1Route.getBounds(), { padding: [30, 30] });
+    renderDay1();
+  } else if (day === 2) {
+    day2Layer.addTo(map);
+    map.fitBounds(day2Route.getBounds(), { padding: [30, 30] });
+    renderDay2();
+  } else {
+    day1Layer.addTo(map);
+    day2Layer.addTo(map);
+    const allBounds = L.latLngBounds(day1Coords.concat(day2Coords));
+    map.fitBounds(allBounds, { padding: [30, 30] });
+    renderInfo();
+  }
+}
+
+function spotCard(s, dayClass) {
+  const foodHtml = s.foods ? `<div class="food-list">${s.foods.map(f => `<span class="food-chip">${f}</span>`).join('')}</div>` : '';
+  const priceHtml = s.price ? `<span class="price-tag">${s.price}</span>` : '';
+  const hotHtml = s.hot ? `<span class="hot-tag">HOT</span>` : '';
+  const restHtml = s.restaurants ? `<div class="rest-list">${s.restaurants.map(r => `
+    <div class="rest-item">
+      <div class="rest-name"><span class="rest-tag">${r.tag}</span> ${r.name}</div>
+      <div class="rest-desc">${r.desc}</div>
+      <span class="price-tag">${r.price}</span>
+    </div>
+  `).join('')}</div>` : '';
+  const numHtml = s.isMeal ? `<div class="spot-num" style="background:var(--accent-red);font-size:16px">&#127860;</div>` : `<div class="spot-num">${s.id}</div>`;
+  const mealClass = s.isMeal ? ' food' : '';
+  const clickAttr = s.isMeal ? '' : `onclick="flyTo(${s.lat}, ${s.lng}, ${s.id})"`;
+  return `
+    <div class="spot-card ${dayClass}${mealClass}" ${clickAttr}>
+      ${numHtml}
+      <h3>${s.nameKo} ${hotHtml}</h3>
+      <div class="chinese">${s.chinese}</div>
+      <div class="transport">${s.transport}</div>
+      <div class="desc">${s.descKo}</div>
+      ${priceHtml}
+      ${foodHtml}
+      ${restHtml}
+      ${!s.isMeal ? `<div class="card-gmap" onclick="event.stopPropagation()">
+        <a href="https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}" target="_blank" class="gmap-btn">Google Maps &#8599;</a>
+        <a href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}&travelmode=transit" target="_blank" class="gmap-btn gmap-nav">길찾기 &#8599;</a>
+      </div>` : ''}
+    </div>
+  `;
+}
+
+function renderDay1() {
+  const morning = DAY1_SPOTS.filter(s => s.time === 'morning');
+  const lunch = DAY1_SPOTS.filter(s => s.time === 'lunch');
+  const afternoon = DAY1_SPOTS.filter(s => s.time === 'afternoon');
+  const dinner = DAY1_SPOTS.filter(s => s.time === 'dinner');
+  const evening = DAY1_SPOTS.filter(s => s.time === 'evening');
+
+  document.getElementById('content').innerHTML = `
+    <div class="time-block">
+      <div class="time-label">&#9728;&#65039; AM 09:00 ~ 12:00</div>
+      ${morning.map(s => spotCard(s, '')).join('')}
+    </div>
+    <div class="time-block">
+      <div class="time-label">&#127860; PM 12:00 ~ 13:30 점심</div>
+      ${lunch.map(s => spotCard(s, '')).join('')}
+    </div>
+    <div class="time-block">
+      <div class="time-label">&#9749; PM 14:00 ~ 17:30</div>
+      ${afternoon.map(s => spotCard(s, '')).join('')}
+    </div>
+    <div class="time-block">
+      <div class="time-label">&#127869; PM 18:00 ~ 19:30 저녁</div>
+      ${dinner.map(s => spotCard(s, '')).join('')}
+    </div>
+    <div class="time-block">
+      <div class="time-label">&#127769; PM 19:30 ~ 21:00</div>
+      ${evening.map(s => spotCard(s, '')).join('')}
+    </div>
+  `;
+}
+
+function renderDay2() {
+  const morning = DAY2_SPOTS.filter(s => s.time === 'morning');
+  const lunch = DAY2_SPOTS.filter(s => s.time === 'lunch');
+  const afternoon = DAY2_SPOTS.filter(s => s.time === 'afternoon');
+  const dinner = DAY2_SPOTS.filter(s => s.time === 'dinner');
+  const evening = DAY2_SPOTS.filter(s => s.time === 'evening');
+
+  document.getElementById('content').innerHTML = `
+    <div class="time-block">
+      <div class="time-label">&#9728;&#65039; AM 09:00 ~ 12:00</div>
+      ${morning.map(s => spotCard(s, 'day2')).join('')}
+    </div>
+    <div class="time-block">
+      <div class="time-label">&#127860; PM 12:00 ~ 13:30 점심</div>
+      ${lunch.map(s => spotCard(s, 'day2')).join('')}
+    </div>
+    <div class="time-block">
+      <div class="time-label">&#9749; PM 13:30 ~ 16:00</div>
+      ${afternoon.map(s => spotCard(s, 'day2')).join('')}
+    </div>
+    <div class="time-block">
+      <div class="time-label">&#127869; PM 17:30 ~ 19:00 저녁</div>
+      ${dinner.map(s => spotCard(s, 'day2')).join('')}
+    </div>
+    <div class="time-block">
+      <div class="time-label">&#127769; PM 19:00 ~ 21:00</div>
+      ${evening.map(s => spotCard(s, 'day2')).join('')}
+    </div>
+  `;
+}
+
+function renderInfo() {
+  document.getElementById('content').innerHTML = `
+    <!-- Transport -->
+    <div class="info-section">
+      <div class="info-header open" onclick="toggleInfo(this)">
+        <span><span class="icon">&#128643;</span> 교통편 안내</span>
+        <span class="arrow">&#9660;</span>
+      </div>
+      <div class="info-body open">
+        <strong>공항 &rarr; 시내 이동수단 비교</strong>
+        <table>
+          <tr><th>구분</th><th>소요시간</th><th>비용</th><th>특징</th></tr>
+          <tr><td><strong>공항철도 (익스프레스)</strong></td><td>약 37분</td><td>NT$160</td><td>15분 간격, 타이페이역 직행. 가장 효율적</td></tr>
+          <tr><td>공항철도 (일반)</td><td>약 50~60분</td><td>NT$160</td><td>정차역 많으나 모든 역 접근 가능</td></tr>
+          <tr><td>택시</td><td>약 40분</td><td>약 1,200 TWD</td><td>숙소 앞까지 편의성 중시</td></tr>
+          <tr><td><strong>쑹산공항 (김포)</strong></td><td>즉시 시내</td><td>항공권별 상이</td><td>김포-쑹산 노선, 도심 접근성 최상</td></tr>
+        </table>
+        <strong style="display:block;margin-top:12px;">이지카드 (悠遊卡) — 이동의 마스터키</strong>
+        <ul>
+          <li><strong>통합 결제</strong>: MRT, 시내버스, TRA, 마오콩 곤돌라, U-Bike 이용 가능</li>
+          <li><strong>생활 밀착형</strong>: 편의점, 카페, 베이커리 등 현금 없이 결제</li>
+          <li><strong>충전</strong>: 모든 MRT역과 편의점에서 상시 충전. 카드 비용 NT$100</li>
+          <li>MRT&harr;버스 1시간 이내 환승 시 NT$8 할인</li>
+          <li><strong>택시</strong>: 기본요금 NT$70, 야간 할증 NT$20 / <strong>우버</strong> 사용 가능</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Restaurants -->
+    <div class="info-section">
+      <div class="info-header" onclick="toggleInfo(this)">
+        <span><span class="icon">&#127860;</span> 추천 맛집 총정리</span>
+        <span class="arrow">&#9660;</span>
+      </div>
+      <div class="info-body">
+        <table>
+          <tr><th>식당명</th><th>위치</th><th>대표 메뉴</th><th>가격대</th></tr>
+          <tr><td><strong>딘타이펑 본점</strong></td><td>융캉제</td><td>샤오롱바오</td><td>NT$250~</td></tr>
+          <tr><td><strong>아종면선</strong></td><td>시먼딩</td><td>면선(곱창국수)</td><td>NT$55~</td></tr>
+          <tr><td><strong>카오지 (高記)</strong></td><td>융캉제</td><td>생전빵/샤오롱바오</td><td>NT$200~</td></tr>
+          <tr><td><strong>키키레스토랑</strong></td><td>중산구</td><td>쓰촨요리</td><td>NT$300~</td></tr>
+          <tr><td><strong>스무디하우스</strong></td><td>융캉제</td><td>망고빙수</td><td>NT$200~</td></tr>
+          <tr><td><strong>류위즈</strong></td><td>닝샤야시장</td><td>타로볼/계란볼</td><td>NT$60~</td></tr>
+          <tr><td><strong>아간이위엔</strong></td><td>지우펀</td><td>타로볼</td><td>NT$55~</td></tr>
+          <tr><td><strong>황지루러우판</strong></td><td>중산구</td><td>루로우판</td><td>NT$40~</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Hot Places -->
+    <div class="info-section">
+      <div class="info-header" onclick="toggleInfo(this)">
+        <span><span class="icon">&#128293;</span> 최신 핫플레이스 2025~2026</span>
+        <span class="arrow">&#9660;</span>
+      </div>
+      <div class="info-body">
+        <ul>
+          <li><strong>화산1914문창원구 (華山1914)</strong> — 옛 주류공장을 개조한 복합문화공간. 주말 플리마켓, 전시, 라이브 공연. MRT 중샤오신성역.</li>
+          <li><strong>대도청 (大稻埕)</strong> — 1920년대 레트로 거리, 힙한 카페 & 독립서점. 일몰 시간 부두에서 석양 감상 필수! MRT 다차오터우역.</li>
+          <li><strong>송산문창원구 (松山文創園區)</strong> — 옛 담배공장 리모델링. 디자인 숍, 전시, 카페. MZ세대 인기 급상승.</li>
+          <li><strong>사사남춘 (四四南村)</strong> — 옛 군인마을을 개조한 문화공간. 타이페이101 근처 주말 플리마켓.</li>
+          <li><strong>치펑제 골목 (赤峰街)</strong> — 중산역 감성 편집숍+카페 골목. Gen Z 세대 최애 트렌디 공간. 낡은 골목의 지역 활성화 모범 사례.</li>
+          <li><strong>우노원스 카페 (Unoonce)</strong> — 중산구 한국풍 카페, 핑크벽 포토스팟, 오후 4시 이후 야간 모드 전환.</li>
+          <li><strong>타이베이 돔</strong> — 2023년 완공, 약 4만 석 초대형 돔구장. 글로벌 이벤트를 주도하는 새 엔터테인먼트 허브.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Travel Tips -->
+    <div class="info-section">
+      <div class="info-header" onclick="toggleInfo(this)">
+        <span><span class="icon">&#128161;</span> 여행 필수 팁</span>
+        <span class="arrow">&#9660;</span>
+      </div>
+      <div class="info-body">
+        <ul>
+          <li><strong>환전</strong>: 1 TWD &asymp; 44원. 야시장은 현금만 가능!</li>
+          <li><strong>전압</strong>: 110V / 60Hz, 미국식 납작 2핀 플러그. <strong>멀티어댑터 필수!</strong></li>
+          <li><strong>통신</strong>: 공항에서 선불 SIM 구매 (~NT$300, 3일 무제한). eSIM도 가능.</li>
+          <li><strong>날씨</strong>: 3~5월(봄, 우산 필수), 6~9월(고온다습), 10~12월(여행 최적기)</li>
+          <li><strong>앱</strong>: Google Maps (MRT/버스 완벽 지원), Uber, KKday/Klook</li>
+          <li><strong>MRT 운행</strong>: 06:00 ~ 00:00 (역별 상이)</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Day 2 Option B -->
+    <div class="info-section">
+      <div class="info-header" onclick="toggleInfo(this)">
+        <span><span class="icon">&#9832;</span> DAY 2 옵션 B: 베이터우 온천 + 단수이</span>
+        <span class="arrow">&#9660;</span>
+      </div>
+      <div class="info-body">
+        <ul>
+          <li><strong>베이터우 온천 (北投)</strong> — MRT 신베이터우역. 지열곡의 신비로운 연무, 1913년 빅토리아 양식 온천박물관(실내화 필수!), 세계적 친환경 도서관. 유황 향 가득한 힐링 마을.</li>
+          <li><strong>단수이 (淡水)</strong> — MRT 단수이역. 소백궁, 홍마오청 등 이국적 건축물과 영화 &lt;말할 수 없는 비밀&gt; 촬영지 진리대학교. 올드스트리트 산책 후 어인부두 석양 필수!</li>
+        </ul>
+        <strong style="display:block;margin-top:8px;">감성 비교:</strong>
+        <table style="margin-top:4px;">
+          <tr><th></th><th>단수이 (강변 향수)</th><th>지우펀 (산속 등불)</th></tr>
+          <tr><td>분위기</td><td>이국적 항구 노을</td><td>신비로운 야경</td></tr>
+          <tr><td>테마</td><td>&lt;말할 수 없는 비밀&gt; 첫사랑</td><td>&lt;센과 치히로&gt; 환상</td></tr>
+          <tr><td>필수</td><td>역사유적+석양</td><td>계단 찻집+야경</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Day 2 Option C -->
+    <div class="info-section">
+      <div class="info-header" onclick="toggleInfo(this)">
+        <span><span class="icon">&#127749;</span> DAY 2 옵션 C: 마오콩 힐링 + 동물원</span>
+        <span class="arrow">&#9660;</span>
+      </div>
+      <div class="info-body">
+        <ul>
+          <li><strong>마오콩 (貓空)</strong> — 도심에서 30분! 케이블카 타고 산등성이를 오르며 탁 트인 전경 감상. 중국 10대 명차 철관음차 산지. 테라스 찻집에서 차+정갈한 요리.</li>
+          <li><strong>타이베이 동물원 (台北市立動物園)</strong> — 판다와 희귀 동물을 자연 친화적 환경에서 관람. 에너지 효율 TIP: 동물원 남문역에서 하차 후 셔틀로 내려오며 관람!</li>
+          <li><strong>추천 코스</strong>: MRT 동물원역 &rarr; 케이블카 &rarr; 마오콩 찻집(2~3시간) &rarr; 동물원 남문역 하차 &rarr; 셔틀 관람 &rarr; 시내 복귀</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Cultural Themes -->
+    <div class="info-section">
+      <div class="info-header" onclick="toggleInfo(this)">
+        <span><span class="icon">&#127963;</span> 타이베이 10대 문화 테마</span>
+        <span class="arrow">&#9660;</span>
+      </div>
+      <div class="info-body">
+        <ul>
+          <li><strong>1. 올드 타이베이</strong>: 완화구 — 140년 전 다섯 성문에서 시작된 역사적 뿌리</li>
+          <li><strong>2. 젊음의 에너지</strong>: 시먼딩 — 서문홍루(1908)의 리빙 아카이브</li>
+          <li><strong>3. 근대사 서사</strong>: 중정구 — 자유광장, 228평화공원, 총통부</li>
+          <li><strong>4. 미식 & 창의</strong>: 융캉제·화산1914 — 로컬 감성+산업유산 재생</li>
+          <li><strong>5. 레트로 감성</strong>: 디화제·중산 — 100년 거리+치펑제 편집숍</li>
+          <li><strong>6. 현대 스카이라인</strong>: 신이구 — 101, 돔, 쓰쓰남촌 대비</li>
+          <li><strong>7. 산속 찻향</strong>: 마오콩 — 케이블카+철관음 찻집 힐링</li>
+          <li><strong>8. 예술 벨트</strong>: 위안산·스린 — 시립미술관+최대 야시장</li>
+          <li><strong>9. 보물 & 온천</strong>: 고궁박물원·베이터우 — 문명의 보물+유황 힐링</li>
+          <li><strong>10. 노을 & 등불</strong>: 단수이·지우펀 — 영화 속 낭만</li>
+        </ul>
+      </div>
+    </div>
+  `;
+}
+
+function toggleInfo(el) {
+  el.classList.toggle('open');
+  el.nextElementSibling.classList.toggle('open');
+}
+
+function flyTo(lat, lng, id) {
+  map.flyTo([lat, lng], 16, { duration: 0.8 });
+  const markers = currentDay === 2 ? day2Markers : day1Markers;
+  const found = markers.find(m => m.spot.id === id);
+  if (found) setTimeout(() => found.marker.openPopup(), 800);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ─── POI (Points of Interest) ───
+const poiLayers = {};
+const poiActive = new Set();
+
+const poiConfig = {
+  restaurant: {
+    query: 'node["amenity"~"restaurant|fast_food"]',
+    icon: '&#127860;', color: '#e74c3c', label: '식당'
+  },
+  cafe: {
+    query: 'node["amenity"="cafe"]',
+    icon: '&#9749;', color: '#8e6e53', label: '카페'
+  },
+  tourism: {
+    query: 'node["tourism"~"attraction|museum|viewpoint|artwork"];node["historic"];node["amenity"="place_of_worship"]',
+    icon: '&#127963;', color: '#2ecc71', label: '관광지'
+  },
+  convenience: {
+    query: 'node["shop"="convenience"]',
+    icon: '&#127978;', color: '#3498db', label: '편의점'
+  },
+  station: {
+    query: 'node["station"="subway"];node["railway"="station"]',
+    icon: '&#128643;', color: '#9b59b6', label: '지하철'
+  }
+};
+
+function togglePOI(btn, cat) {
+  if (poiActive.has(cat)) {
+    // Remove
+    poiActive.delete(cat);
+    btn.classList.remove('active');
+    if (poiLayers[cat]) { map.removeLayer(poiLayers[cat]); delete poiLayers[cat]; }
+  } else {
+    // Load & show
+    poiActive.add(cat);
+    btn.classList.add('active');
+    loadPOI(cat);
+  }
+  document.getElementById('poiClearBtn').style.display = poiActive.size > 0 ? 'inline-flex' : 'none';
+}
+
+function loadPOI(cat) {
+  const bounds = map.getBounds();
+  const bbox = `${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()}`;
+  const cfg = poiConfig[cat];
+  const queries = cfg.query.split(';').map(q => `${q}(${bbox});`).join('');
+  const overpassQuery = `[out:json][timeout:10];(${queries});out body 200;`;
+  const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
+
+  // Show loading state
+  const btn = document.querySelector(`.poi-chip[data-cat="${cat}"]`);
+  const origText = btn.innerHTML;
+  btn.innerHTML = '...';
+
+  fetch(url)
+    .then(r => r.json())
+    .then(data => {
+      btn.innerHTML = origText;
+      if (poiLayers[cat]) map.removeLayer(poiLayers[cat]);
+      const layer = L.layerGroup();
+      data.elements.forEach(el => {
+        if (!el.lat || !el.lon) return;
+        const name = el.tags.name || el.tags['name:en'] || el.tags['name:zh'] || cfg.label;
+        const addr = el.tags['addr:full'] || el.tags['addr:street'] || '';
+        const cuisine = el.tags.cuisine ? `<br><span style="font-size:10px;color:#888;">${el.tags.cuisine}</span>` : '';
+        const icon = L.divIcon({
+          className: '',
+          html: `<div style="width:22px;height:22px;border-radius:50%;background:${cfg.color};color:white;display:flex;align-items:center;justify-content:center;font-size:12px;box-shadow:0 1px 4px rgba(0,0,0,0.3);border:1.5px solid white;">${cfg.icon}</div>`,
+          iconSize: [22, 22], iconAnchor: [11, 11], popupAnchor: [0, -14]
+        });
+        const marker = L.marker([el.lat, el.lon], { icon })
+          .bindPopup(`<div class="poi-popup"><strong>${name}</strong>${cuisine}<br><span class="poi-cat">${cfg.label}</span>${addr ? '<div class="poi-addr">' + addr + '</div>' : ''}<div style="margin-top:5px;display:flex;gap:4px;flex-wrap:wrap;"><a href="https://www.google.com/maps/search/?api=1&query=${el.lat},${el.lon}" target="_blank" style="padding:3px 8px;border-radius:6px;background:#4285f4;color:white;font-size:10px;text-decoration:none;font-weight:700;">Maps &#8599;</a><a href="https://www.google.com/maps/dir/?api=1&destination=${el.lat},${el.lon}&travelmode=transit" target="_blank" style="padding:3px 8px;border-radius:6px;background:#34a853;color:white;font-size:10px;text-decoration:none;font-weight:700;">길찾기 &#8599;</a><button onclick="selectSearchResult(${el.lat},${el.lon},'${name.replace(/'/g,"\\'")}')" style="padding:3px 8px;border:none;border-radius:6px;background:#9b59b6;color:white;font-size:10px;cursor:pointer;font-weight:700;">&#128205; 선택</button></div></div>`);
+        layer.addLayer(marker);
+      });
+      layer.addTo(map);
+      poiLayers[cat] = layer;
+    })
+    .catch(() => { btn.innerHTML = origText; });
+}
+
+function clearAllPOI() {
+  poiActive.forEach(cat => {
+    if (poiLayers[cat]) { map.removeLayer(poiLayers[cat]); delete poiLayers[cat]; }
+  });
+  poiActive.clear();
+  document.querySelectorAll('.poi-chip.active').forEach(b => b.classList.remove('active'));
+  document.getElementById('poiClearBtn').style.display = 'none';
+}
+
+// Reload POIs when map moves (debounced)
+let poiReloadTimer = null;
+map.on('moveend', () => {
+  if (poiActive.size === 0) return;
+  clearTimeout(poiReloadTimer);
+  poiReloadTimer = setTimeout(() => {
+    poiActive.forEach(cat => loadPOI(cat));
+  }, 800);
+});
+
+// ─── SEARCH ───
+let searchMarkers = [];
+
+// 한국어 → 중국어 변환 사전 (주요 관광지/지역)
+const koToZh = {
+  '타이페이역':'台北車站','타이베이역':'台北車站','타이페이 역':'台北車站',
+  '룽산쓰':'龍山寺','용산사':'龍山寺','룽산사':'龍山寺',
+  '시먼딩':'西門町','서문정':'西門町',
+  '중정기념당':'中正紀念堂','장개석기념관':'中正紀念堂',
+  '타이페이101':'台北101','타이베이101':'台北101','101타워':'台北101',
+  '융캉제':'永康街','영강가':'永康街',
+  '닝샤야시장':'寧夏夜市','닝샤 야시장':'寧夏夜市',
+  '스린야시장':'士林夜市','스린 야시장':'士林夜市','사림야시장':'士林夜市',
+  '지우펀':'九份','구분':'九份','주펀':'九份',
+  '단수이':'淡水','담수':'淡水',
+  '베이터우':'北投','북투':'北投',
+  '마오콩':'貓空','묘공':'貓空',
+  '국립고궁박물관':'國立故宮博物院','고궁박물관':'故宮博物院','고궁박물원':'故宮博物院',
+  '화산1914':'華山1914','화산':'華山1914文創園區',
+  '송산문창원구':'松山文創園區','송산':'松山文創園區',
+  '대도청':'大稻埕','대도정':'大稻埕','디화제':'迪化街',
+  '중산역':'中山站','중산':'中山站',
+  '동먼역':'東門站','동문역':'東門站',
+  '시정부역':'市政府站',
+  '쓰쓰남촌':'四四南村','사사남촌':'四四南村',
+  '보피리아오':'剝皮寮','박피료':'剝皮寮',
+  '서문홍루':'西門紅樓',
+  '228평화공원':'二二八和平公園','228공원':'二二八和平公園',
+  '총통부':'總統府','대만총통부':'總統府',
+  '치펑제':'赤峰街',
+  '라오허제야시장':'饒河街夜市','라오허제 야시장':'饒河街夜市','요하가야시장':'饒河街夜市',
+  '타이베이돔':'台北大巨蛋','타이페이돔':'台北大巨蛋',
+  '동물원':'台北市立動物園','타이베이동물원':'台北市立動物園',
+  '타오위안공항':'桃園機場','도원공항':'桃園機場',
+  '쑹산공항':'松山機場','송산공항':'松山機場',
+  '편의점':'便利商店','세븐일레븐':'7-11',
+  '예류':'野柳','야류':'野柳',
+  '스펀':'十分','십분':'十分',
+  '진리대학교':'真理大學',
+  '엑스포공원':'花博公園','화보공원':'花博公園',
+  '시립미술관':'臺北市立美術館','타이베이미술관':'臺北市立美術館',
+  '식물원':'台北植物園','타이베이식물원':'台北植物園',
+};
+
+function translateKoToSearch(query) {
+  // 정확히 매칭되는 한국어가 있으면 중국어로 변환
+  const lower = query.trim();
+  if (koToZh[lower]) return koToZh[lower];
+  // 부분 매칭 시도
+  for (const [ko, zh] of Object.entries(koToZh)) {
+    if (lower.includes(ko)) return zh;
+  }
+  return query; // 매칭 없으면 원본 반환
+}
+
+function isKorean(text) {
+  return /[가-힣]/.test(text);
+}
+
+function searchPlace() {
+  const q = document.getElementById('searchInput').value.trim();
+  if (!q) return;
+
+  // 한국어 입력이면 중국어로 변환 후 검색, 원본도 병렬 검색
+  const translated = isKorean(q) ? translateKoToSearch(q) : q;
+  const queries = translated !== q ? [translated, q] : [q];
+
+  Promise.all(queries.map(query => {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=tw&limit=5&accept-language=ko,zh,en`;
+    return fetch(url, { headers: { 'User-Agent': 'TaiwanTravelGuide/1.0' } }).then(r => r.json());
+  }))
+    .then(results => {
+      // 결과 합치고 중복 제거
+      const seen = new Set();
+      const data = results.flat().filter(d => {
+        const key = `${parseFloat(d.lat).toFixed(4)},${parseFloat(d.lon).toFixed(4)}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }).slice(0, 5);
+
+      const resultsEl = document.getElementById('searchResults');
+      if (!data.length) {
+        resultsEl.innerHTML = '<div class="search-result-item"><div class="result-name">검색 결과가 없습니다</div></div>';
+        resultsEl.classList.add('show');
+        return;
+      }
+      resultsEl.innerHTML = data.map((d, i) => `
+        <div class="search-result-item" onclick="selectSearchResult(${d.lat}, ${d.lon}, '${d.display_name.replace(/'/g, "\\'")}')">
+          <div class="result-name">${d.display_name.split(',')[0]}</div>
+          <div class="result-addr">${d.display_name.split(',').slice(1, 3).join(',')}</div>
+        </div>
+      `).join('');
+      resultsEl.classList.add('show');
+    })
+    .catch(() => {});
+}
+
+// ─── MY LOCATION ───
+let myLatLng = null;
+let myLocMarker = null;
+let routeLayer = null;
+let destLatLng = null;
+let destName = '';
+
+// Add location button to map
+const locControl = L.control({ position: 'topright' });
+locControl.onAdd = function() {
+  const btn = L.DomUtil.create('button', 'my-loc-btn');
+  btn.innerHTML = '&#128204;';
+  btn.title = '내 위치';
+  btn.onclick = function(e) {
+    e.stopPropagation();
+    getMyLocation();
+  };
+  L.DomEvent.disableClickPropagation(btn);
+  return btn;
+};
+locControl.addTo(map);
+
+function getMyLocation() {
+  if (!navigator.geolocation) { alert('이 브라우저는 위치 서비스를 지원하지 않습니다.'); return; }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      myLatLng = [pos.coords.latitude, pos.coords.longitude];
+      if (myLocMarker) map.removeLayer(myLocMarker);
+      const icon = L.divIcon({
+        className: '',
+        html: `<div style="width:16px;height:16px;border-radius:50%;background:#4285f4;border:3px solid white;box-shadow:0 0 8px rgba(66,133,244,0.6);"></div>`,
+        iconSize: [16, 16], iconAnchor: [8, 8]
+      });
+      myLocMarker = L.marker(myLatLng, { icon, zIndexOffset: 1000 }).addTo(map)
+        .bindPopup('<strong>내 위치</strong>').openPopup();
+      map.flyTo(myLatLng, 15, { duration: 0.8 });
+      document.querySelector('.my-loc-btn').classList.add('active');
+    },
+    err => {
+      if (err.code === 1) alert('위치 권한이 거부되었습니다.\n브라우저 설정에서 위치 접근을 허용해 주세요.');
+      else alert('위치를 가져올 수 없습니다.');
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+}
+
+function selectSearchResult(lat, lng, name) {
+  document.getElementById('searchResults').classList.remove('show');
+  document.getElementById('clearSearchBtn').style.display = 'flex';
+  clearSearchMarkers();
+  destLatLng = [lat, lng];
+  destName = name.split(',')[0];
+
+  const icon = L.divIcon({
+    className: '',
+    html: `<div style="
+      width:34px;height:34px;border-radius:50%;
+      background:#9b59b6;color:white;
+      display:flex;align-items:center;justify-content:center;
+      font-size:18px;
+      box-shadow:0 2px 10px rgba(155,89,182,0.5);
+      border:3px solid white;
+    ">&#128205;</div>`,
+    iconSize: [34, 34], iconAnchor: [17, 17], popupAnchor: [0, -20]
+  });
+
+  const popupHtml = `<strong>&#128205; ${destName}</strong><br>
+    <span class="popup-transport">${name.split(',').slice(1, 3).join(',')}</span><br>
+    <div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;">
+      <button onclick="startRoute()" style="padding:4px 10px;border:none;border-radius:6px;background:#4285f4;color:white;font-size:11px;font-weight:700;cursor:pointer;">&#128694; 도보 경로</button>
+      <a href="https://www.google.com/maps/search/?api=1&query=${lat},${lng}" target="_blank" style="padding:4px 10px;border-radius:6px;background:#4285f4;color:white;font-size:11px;text-decoration:none;font-weight:700;">Maps &#8599;</a>
+      <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=transit" target="_blank" style="padding:4px 10px;border-radius:6px;background:#34a853;color:white;font-size:11px;text-decoration:none;font-weight:700;">길찾기 &#8599;</a>
+    </div>`;
+
+  const m = L.marker([lat, lng], { icon }).addTo(map).bindPopup(popupHtml).openPopup();
+  searchMarkers.push(m);
+  map.flyTo([lat, lng], 16, { duration: 0.8 });
+}
+
+// ─── ROUTING (OSRM) ───
+const stepIcons = {
+  depart: '&#128694;', arrive: '&#127937;',
+  turn: '&#8617;', 'new name': '&#10145;', merge: '&#10145;',
+  'end of road': '&#8617;', fork: '&#8618;', roundabout: '&#128260;',
+  'continue': '&#10145;', default: '&#10145;'
+};
+const turnDir = {
+  left: '좌회전', right: '우회전', 'slight left': '약간 좌회전',
+  'slight right': '약간 우회전', 'sharp left': '크게 좌회전',
+  'sharp right': '크게 우회전', uturn: 'U턴', straight: '직진'
+};
+
+function startRoute() {
+  if (!myLatLng) {
+    // 위치 없으면 먼저 위치 취득 후 다시 시도
+    if (!navigator.geolocation) { alert('위치 서비스를 지원하지 않습니다.'); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        myLatLng = [pos.coords.latitude, pos.coords.longitude];
+        if (myLocMarker) map.removeLayer(myLocMarker);
+        const icon = L.divIcon({
+          className: '',
+          html: `<div style="width:16px;height:16px;border-radius:50%;background:#4285f4;border:3px solid white;box-shadow:0 0 8px rgba(66,133,244,0.6);"></div>`,
+          iconSize: [16, 16], iconAnchor: [8, 8]
+        });
+        myLocMarker = L.marker(myLatLng, { icon, zIndexOffset: 1000 }).addTo(map);
+        document.querySelector('.my-loc-btn').classList.add('active');
+        fetchRoute();
+      },
+      () => alert('위치를 가져올 수 없습니다. 위치 권한을 허용해 주세요.'),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+    return;
+  }
+  fetchRoute();
+}
+
+function fetchRoute() {
+  if (!myLatLng || !destLatLng) return;
+  const url = `https://router.project-osrm.org/route/v1/foot/${myLatLng[1]},${myLatLng[0]};${destLatLng[1]},${destLatLng[0]}?overview=full&geometries=geojson&steps=true`;
+  fetch(url)
+    .then(r => r.json())
+    .then(data => {
+      if (data.code !== 'Ok' || !data.routes.length) { alert('경로를 찾을 수 없습니다.'); return; }
+      const route = data.routes[0];
+      displayRoute(route);
+    })
+    .catch(() => alert('경로 검색에 실패했습니다.'));
+}
+
+function displayRoute(route) {
+  // Draw route on map
+  if (routeLayer) map.removeLayer(routeLayer);
+  const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
+  routeLayer = L.polyline(coords, { color: '#4285f4', weight: 5, opacity: 0.8 }).addTo(map);
+  map.fitBounds(routeLayer.getBounds(), { padding: [40, 40] });
+
+  // Route info
+  const distKm = (route.distance / 1000).toFixed(1);
+  const durMin = Math.round(route.duration / 60);
+  const hours = Math.floor(durMin / 60);
+  const mins = durMin % 60;
+  const timeStr = hours > 0 ? `${hours}시간 ${mins}분` : `${mins}분`;
+
+  document.getElementById('routeInfo').innerHTML = `
+    <div class="ri-item"><span class="ri-val">${distKm}</span><span class="ri-unit">km</span></div>
+    <div class="ri-item"><span class="ri-val">${timeStr}</span><span class="ri-unit">(도보)</span></div>
+    <div class="ri-item" style="font-size:11px;color:var(--text-light)">&#128205; ${destName}</div>
+  `;
+
+  // Steps
+  const steps = route.legs[0].steps;
+  document.getElementById('routeSteps').innerHTML = steps.map((s, i) => {
+    const icon = stepIcons[s.maneuver.type] || stepIcons.default;
+    const dir = s.maneuver.modifier ? (turnDir[s.maneuver.modifier] || s.maneuver.modifier) : '';
+    const dist = s.distance >= 1000 ? (s.distance/1000).toFixed(1) + 'km' : Math.round(s.distance) + 'm';
+    let text = '';
+    if (s.maneuver.type === 'depart') text = `출발! ${s.name || ''}`;
+    else if (s.maneuver.type === 'arrive') text = `도착! ${destName}`;
+    else text = `${dir} ${s.name ? '— ' + s.name : ''}`;
+    return `<div class="route-step">
+      <div class="step-icon">${icon}</div>
+      <div class="step-text">${text.trim()}</div>
+      <div class="step-dist">${dist}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('routePanelTitle').textContent = `길찾기 — ${destName}`;
+  document.getElementById('routePanel').classList.add('show');
+}
+
+function openGoogleMaps() {
+  if (!myLatLng || !destLatLng) return;
+  const url = `https://www.google.com/maps/dir/${myLatLng[0]},${myLatLng[1]}/${destLatLng[0]},${destLatLng[1]}`;
+  window.open(url, '_blank');
+}
+
+function closeRoutePanel() {
+  document.getElementById('routePanel').classList.remove('show');
+  if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
+}
+
+function clearSearch() {
+  clearSearchMarkers();
+  closeRoutePanel();
+  destLatLng = null;
+  destName = '';
+  document.getElementById('searchInput').value = '';
+  document.getElementById('searchResults').classList.remove('show');
+  document.getElementById('clearSearchBtn').style.display = 'none';
+}
+
+function clearSearchMarkers() {
+  searchMarkers.forEach(m => map.removeLayer(m));
+  searchMarkers = [];
+}
+
+// Enter key to search
+document.getElementById('searchInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') searchPlace();
+});
+
+// Close results on outside click
+document.addEventListener('click', e => {
+  if (!e.target.closest('.search-bar') && !e.target.closest('.search-results')) {
+    document.getElementById('searchResults').classList.remove('show');
+  }
+});
+
+// Initial render
+renderDay1();
+
+// Scroll to top button
+window.addEventListener('scroll', () => {
+  document.getElementById('scrollTop').classList.toggle('show', window.scrollY > 400);
+});
+</script>
+</body>
+</html>
