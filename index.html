@@ -121,6 +121,11 @@
   .search-result-item:hover, .search-result-item:active { background: #e8f4fd; }
   .search-result-item .result-name { font-weight: 700; color: var(--text); }
   .search-result-item .result-addr { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+  .search-result-item.search-gmap {
+    background: #f0f7ff;
+    border-bottom: none;
+    border-top: 2px solid #e8f0fe;
+  }
 
   /* POI Bar */
   .poi-bar {
@@ -1418,6 +1423,14 @@ const koToZh = {
   '엑스포공원':'花博公園','화보공원':'花博公園',
   '시립미술관':'臺北市立美術館','타이베이미술관':'臺北市立美術館',
   '식물원':'台北植物園','타이베이식물원':'台北植物園',
+  '까르푸':'家樂福','가르푸':'家樂福','카르푸':'家樂福',
+  '루이사커피':'路易莎咖啡','루이사':'路易莎','louisa':'路易莎',
+  '스타벅스':'星巴克','맥도날드':'麥當勞','맥도날드':'麥當勞',
+  '세븐일레븐':'7-ELEVEN','패밀리마트':'全家便利商店','전가':'全家',
+  '왓슨스':'屈臣氏','코스메':'屈臣氏',
+  '딘타이펑':'鼎泰豐','정태풍':'鼎泰豐',
+  '키키레스토랑':'Kiki餐廳',
+  '테슬라':'Tesla','충전소':'充電站',
 };
 
 function translateKoToSearch(query) {
@@ -1435,20 +1448,36 @@ function isKorean(text) {
   return /[가-힣]/.test(text);
 }
 
+let lastSearchQuery = '';
+
+function gmapSearchUrl(query) {
+  const c = map.getCenter();
+  const z = map.getZoom();
+  return `https://www.google.com/maps/search/${encodeURIComponent(query)}/@${c.lat},${c.lng},${z}z`;
+}
+
 function searchPlace() {
   const q = document.getElementById('searchInput').value.trim();
   if (!q) return;
+  lastSearchQuery = q;
+
+  const resultsEl = document.getElementById('searchResults');
+  resultsEl.innerHTML = '<div class="search-result-item"><div class="result-name" style="color:#adb5bd;">검색 중...</div></div>';
+  resultsEl.classList.add('show');
 
   // 한국어 입력이면 중국어로 변환 후 검색, 원본도 병렬 검색
   const translated = isKorean(q) ? translateKoToSearch(q) : q;
   const queries = translated !== q ? [translated, q] : [q];
 
+  // Nominatim: 현재 지도 영역 우선 + 전체 대만
+  const bounds = map.getBounds();
+  const vb = `${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()},${bounds.getSouth()}`;
+
   Promise.all(queries.map(query => {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=tw&limit=5&accept-language=ko,zh,en`;
-    return fetch(url, { headers: { 'User-Agent': 'TaiwanTravelGuide/1.0' } }).then(r => r.json());
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=tw&limit=5&viewbox=${vb}&bounded=0&accept-language=ko,zh,en`;
+    return fetch(url, { headers: { 'User-Agent': 'TaiwanTravelGuide/1.0' } }).then(r => r.json()).catch(() => []);
   }))
     .then(results => {
-      // 결과 합치고 중복 제거
       const seen = new Set();
       const data = results.flat().filter(d => {
         const key = `${parseFloat(d.lat).toFixed(4)},${parseFloat(d.lon).toFixed(4)}`;
@@ -1457,21 +1486,33 @@ function searchPlace() {
         return true;
       }).slice(0, 5);
 
-      const resultsEl = document.getElementById('searchResults');
-      if (!data.length) {
-        resultsEl.innerHTML = '<div class="search-result-item"><div class="result-name">검색 결과가 없습니다</div></div>';
-        resultsEl.classList.add('show');
-        return;
-      }
-      resultsEl.innerHTML = data.map((d, i) => `
+      let html = data.map(d => `
         <div class="search-result-item" onclick="selectSearchResult(${d.lat}, ${d.lon}, '${d.display_name.replace(/'/g, "\\'")}')">
           <div class="result-name">${d.display_name.split(',')[0]}</div>
           <div class="result-addr">${d.display_name.split(',').slice(1, 3).join(',')}</div>
         </div>
       `).join('');
+
+      // 항상 Google Maps 검색 링크 추가
+      html += `
+        <div class="search-result-item search-gmap" onclick="window.open('${gmapSearchUrl(q)}','_blank')">
+          <div class="result-name" style="color:#4285f4;">&#127760; Google Maps에서 "${q}" 검색</div>
+          <div class="result-addr">매장명, 음식점 등 상세 검색은 Google Maps 추천</div>
+        </div>
+      `;
+
+      if (!data.length) {
+        html = `
+          <div class="search-result-item">
+            <div class="result-name">검색 결과가 없습니다</div>
+            <div class="result-addr">아래 Google Maps 검색을 이용해 보세요</div>
+          </div>
+        ` + html;
+      }
+
+      resultsEl.innerHTML = html;
       resultsEl.classList.add('show');
-    })
-    .catch(() => {});
+    });
 }
 
 // ─── MY LOCATION ───
