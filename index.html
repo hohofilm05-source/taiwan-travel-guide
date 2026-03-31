@@ -544,6 +544,53 @@
     gap: 6px;
   }
 
+  /* Memo section */
+  .memo-section {
+    margin-top: 16px;
+    background: #fffef5;
+    border: 2px dashed #f0d060;
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .memo-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #b8860b;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .memo-textarea {
+    width: 100%;
+    min-height: 80px;
+    border: 1px solid #e8ddb5;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 13px;
+    font-family: inherit;
+    line-height: 1.6;
+    resize: vertical;
+    background: #fff;
+    color: #2d3436;
+    box-sizing: border-box;
+  }
+  .memo-textarea:focus {
+    outline: none;
+    border-color: #f0d060;
+    box-shadow: 0 0 0 3px rgba(240,208,96,0.2);
+  }
+  .memo-saved {
+    font-size: 11px;
+    color: #b8860b;
+    margin-top: 4px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .memo-saved.show {
+    opacity: 1;
+  }
+
   /* Restaurant detail list */
   .rest-list {
     margin-top: 10px;
@@ -1369,6 +1416,26 @@ function spotCard(s, dayClass) {
   `;
 }
 
+function memoHtml(dayKey) {
+  const saved = localStorage.getItem('memo_' + dayKey) || '';
+  return `
+    <div class="memo-section">
+      <div class="memo-title">&#128221; 메모</div>
+      <textarea class="memo-textarea" id="memo-${dayKey}" placeholder="메모를 입력하세요..."
+        oninput="saveMemo('${dayKey}')">${saved}</textarea>
+      <div class="memo-saved" id="memo-status-${dayKey}">저장됨</div>
+    </div>
+  `;
+}
+function saveMemo(dayKey) {
+  const val = document.getElementById('memo-' + dayKey).value;
+  localStorage.setItem('memo_' + dayKey, val);
+  const status = document.getElementById('memo-status-' + dayKey);
+  status.classList.add('show');
+  clearTimeout(status._t);
+  status._t = setTimeout(() => status.classList.remove('show'), 1500);
+}
+
 function renderDay1() {
   const morning = DAY1_SPOTS.filter(s => s.time === 'morning');
   const lunch = DAY1_SPOTS.filter(s => s.time === 'lunch');
@@ -1397,6 +1464,7 @@ function renderDay1() {
       <div class="time-label">&#127769; PM 19:30 ~ 21:00</div>
       ${evening.map(s => spotCard(s, '')).join('')}
     </div>
+    ${memoHtml('day1')}
   `;
 }
 
@@ -1428,6 +1496,7 @@ function renderDay2() {
       <div class="time-label">&#127769; PM 19:00 ~ 21:00</div>
       ${evening.map(s => spotCard(s, 'day2')).join('')}
     </div>
+    ${memoHtml('day2')}
   `;
 }
 
