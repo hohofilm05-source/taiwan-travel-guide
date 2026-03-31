@@ -1796,8 +1796,7 @@ function togglePOI(btn, cat) {
 
 function poiCacheKey(cat) {
   const c = map.getCenter();
-  const z = map.getZoom();
-  return `${cat}_${c.lat.toFixed(2)}_${c.lng.toFixed(2)}_${z}`;
+  return `${cat}_${c.lat.toFixed(1)}_${c.lng.toFixed(1)}`;
 }
 
 function createPoiMarker(el, cfg) {
@@ -1830,22 +1829,18 @@ async function loadPOI(cat) {
   btn.disabled = true;
 
   const bounds = map.getBounds();
-  const center = map.getCenter();
   const queries = cfg.nominatim.map(q =>
-    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=tw&limit=15&viewbox=${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()},${bounds.getSouth()}&bounded=1&accept-language=ko,zh,en`
+    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=tw&limit=20&viewbox=${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()},${bounds.getSouth()}&bounded=1&accept-language=ko,zh,en`
   );
 
   try {
-    const results = [];
-    // Sequential requests with small delay to avoid rate limiting
-    for (const url of queries) {
-      const res = await fetch(url, { headers: { 'User-Agent': 'TaiwanTravelGuide/1.0' } });
-      if (!res.ok) throw new Error('API error');
-      const data = await res.json();
-      results.push(...data);
-      if (queries.length > 1) await new Promise(r => setTimeout(r, 300));
-    }
-    // Deduplicate by coordinates
+    // Parallel requests for speed
+    const responses = await Promise.all(
+      queries.map(url => fetch(url, { headers: { 'User-Agent': 'TaiwanTravelGuide/1.0' } }))
+    );
+    const dataArrays = await Promise.all(responses.map(r => r.ok ? r.json() : []));
+    const results = dataArrays.flat();
+
     const seen = new Set();
     const unique = results.filter(d => {
       const key = `${parseFloat(d.lat).toFixed(4)},${parseFloat(d.lon).toFixed(4)}`;
@@ -1883,6 +1878,36 @@ function clearAllPOI() {
   document.querySelectorAll('.poi-chip.active').forEach(b => b.classList.remove('active'));
   document.getElementById('poiClearBtn').style.display = 'none';
 }
+
+// ─── PRELOAD POI CACHE (background) ───
+setTimeout(() => {
+  const preloadBounds = map.getBounds();
+  const cats = Object.keys(poiConfig);
+  let i = 0;
+  function preloadNext() {
+    if (i >= cats.length) return;
+    const cat = cats[i++];
+    const cfg = poiConfig[cat];
+    const cacheKey = poiCacheKey(cat);
+    if (poiCache[cacheKey]) { preloadNext(); return; }
+    const queries = cfg.nominatim.map(q =>
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=tw&limit=20&viewbox=${preloadBounds.getWest()},${preloadBounds.getNorth()},${preloadBounds.getEast()},${preloadBounds.getSouth()}&bounded=1&accept-language=ko,zh,en`
+    );
+    Promise.all(queries.map(url => fetch(url, { headers: { 'User-Agent': 'TaiwanTravelGuide/1.0' } })))
+      .then(rs => Promise.all(rs.map(r => r.ok ? r.json() : [])))
+      .then(arrs => {
+        const seen = new Set();
+        poiCache[cacheKey] = arrs.flat().filter(d => {
+          const key = `${parseFloat(d.lat).toFixed(4)},${parseFloat(d.lon).toFixed(4)}`;
+          if (seen.has(key)) return false;
+          seen.add(key); return true;
+        });
+        setTimeout(preloadNext, 1200);
+      })
+      .catch(() => setTimeout(preloadNext, 1200));
+  }
+  preloadNext();
+}, 3000);
 
 // ─── MAP CLICK → Google Maps ───
 // Track drag vs click
@@ -1927,12 +1952,12 @@ let lastPoiCenter = null;
 map.on('moveend', () => {
   if (poiActive.size === 0) return;
   const center = map.getCenter();
-  if (lastPoiCenter && center.distanceTo(lastPoiCenter) < 500) return;
+  if (lastPoiCenter && center.distanceTo(lastPoiCenter) < 2000) return;
   clearTimeout(poiReloadTimer);
   poiReloadTimer = setTimeout(() => {
     lastPoiCenter = map.getCenter();
     poiActive.forEach(cat => loadPOI(cat));
-  }, 1500);
+  }, 2000);
 });
 
 // ─── SEARCH ───
