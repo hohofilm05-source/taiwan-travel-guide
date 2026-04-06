@@ -534,6 +534,12 @@
     color: #636e72;
     margin-top: 2px;
   }
+  .shop-desc {
+    font-size: 9px;
+    color: #888;
+    margin-top: 2px;
+    line-height: 1.3;
+  }
   .shopping-title {
     margin-top: 12px;
     font-size: 13px;
@@ -1072,14 +1078,17 @@ const DAY2_SPOTS = [
       { name: '카발란 위스키', zh: '噶瑪蘭威士忌', price: 'NT$800~1,200', emoji: '🥃', img: 'https://qualityliquorstore.com/cdn/shop/files/kavalan-single-malt-whisky__67611.jpg' },
       { name: '펑리수 (鳳梨酥)', zh: '佳德鳳梨酥', price: 'NT$350~480', emoji: '🍍', img: 'https://i0.wp.com/doucoy.com/wp-content/uploads/2020/11/6367586_R1.jpg' },
       { name: '에그롤', zh: '義美蛋捲', price: 'NT$59~79', emoji: '🥚', img: 'https://www.foodforfoodies.co.uk/cdn/shop/files/25b44cdb-b5aa-4e1f-a1eb-333f083844ad25b44cdb-b5aa-4e1f-a1eb-333f083844ad.jpg' },
-      { name: '3시15분 밀크티', zh: '三點一刻奶茶', price: 'NT$149~199', emoji: '🧋', img: 'https://esammi.com/cdn/shop/products/demo-03.jpg' },
+      { name: '3시15분 밀크티', zh: '三點一刻奶茶', price: 'NT$149~199', emoji: '🧋', img: 'https://esammi.com/cdn/shop/products/demo-03.jpg', desc: '오리지널·얼그레이·로스티드·저설탕·선문레이크 등 다양' },
       { name: '보바 초콜릿', zh: '珍珠奶茶巧克力', price: 'NT$79~99', emoji: '🍫', img: 'https://www.nightmarket.ph/cdn/shop/products/8d120a23d68f0b40738baee574e83e79.jpg' },
       { name: '77 구미 초콜릿', zh: '77乳加巧克力', price: 'NT$25~35', emoji: '🍬', img: 'https://img.shoplineapp.com/media/image_clips/659f91400d27ff001df74804/original.jpg' },
       { name: '닥터큐 곤약젤리', zh: 'Dr.Q 蒟蒻果凍', price: 'NT$49~69', emoji: '🍮', img: 'https://img.pchome.com.tw/cs/items/DBAC77A9007W37L/000001_1596508602.jpg' },
       { name: '만한대찬 라면', zh: '滿漢大餐牛肉麵', price: 'NT$55~65', emoji: '🍜', img: 'https://cdn.store-assets.com/s/614078/i/72487904.jpeg' },
       { name: '누가크래커', zh: '牛軋糖餅乾', price: 'NT$120~200', emoji: '🍪', img: 'https://flyingbananastore.com/cdn/shop/files/juelin-juelin-nougat-crackers-snack-fresh-from-taiwan-1208453853.jpg' },
       { name: '망고/석과 건조', zh: '芒果乾', price: 'NT$100~200', emoji: '🥭', img: 'https://img.shoplineapp.com/media/image_clips/64bf9947cb831e0023e1072b/original.jpg' },
-      { name: '스타벅스 자몽시럽', zh: '星巴克蜜柚醬', price: 'NT$450~550', emoji: '🍊', img: 'https://www.starbucks.com.tw/common/objects/images/cake/20181220102631321.jpg' }
+      { name: '스타벅스 자몽시럽', zh: '星巴克蜜柚醬', price: 'NT$450~550', emoji: '🍊', img: 'https://www.starbucks.com.tw/common/objects/images/cake/20181220102631321.jpg' },
+      { name: '아크네 포인트 클리어', zh: 'Acnes抗痘筆', price: 'NT$176', emoji: '💊', img: 'https://img.shoplineapp.com/media/image_clips/5f0a5e6c2bfa8c002282e3d3/original.jpg', desc: '롤링형 여드름 케어. 트러블에 발라주면 끝!' },
+      { name: '다리 치약', zh: 'DARLIE好來牙膏', price: 'NT$79~129', emoji: '🪥', img: 'https://img.shoplineapp.com/media/image_clips/6253cfb6a68e7e0019fb1506/original.jpg', desc: '대만 국민 치약! 민트향 상쾌. 대용량이 저렴' },
+      { name: '드링크백 (음료컵홀더)', zh: '飲料杯提袋', price: 'NT$70~79', emoji: '👜', img: 'https://img.shoplineapp.com/media/image_clips/636e9e3e2db4b80018bcf4d4/original.jpg', desc: '대만 필수템! 버블티 들고다니는 에코백. 선물용 추천' }
     ]
   },
   {
@@ -1390,6 +1399,7 @@ function spotCard(s, dayClass) {
         <div class="shop-img-fallback" style="display:none">${item.emoji}</div>
         <div class="shop-name">${item.name}</div>
         <div class="shop-price">${item.price}</div>
+        ${item.desc ? '<div class="shop-desc">' + item.desc + '</div>' : ''}
       </div>
     `).join('')}</div>` : '';
   const isRest = s.isPickedRestaurant;
